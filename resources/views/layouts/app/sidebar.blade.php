@@ -10,23 +10,45 @@
                 <flux:sidebar.collapse class="lg:hidden" />
             </flux:sidebar.header>
 
+            @php($user = auth()->user())
             <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Platform')" class="grid">
+                <flux:sidebar.group :heading="__('Work')" class="grid">
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('Dashboard') }}
+                        {{ __('Overview') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="building-office-2" :href="route('dashboard.listings.index')" :current="request()->routeIs('dashboard.listings.*')" wire:navigate>
+                        {{ $user->isAdmin() ? __('Listings') : __('My listings') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="inbox" :href="route('dashboard.enquiries.index')" :current="request()->routeIs('dashboard.enquiries.*')" :badge="\App\Models\Enquiry::query()->visibleTo($user)->where('status', \App\Enums\EnquiryStatus::New)->count() ?: null" wire:navigate>
+                        {{ __('Enquiries & tours') }}
+                    </flux:sidebar.item>
+                    @if ($user->isAgent())
+                        <flux:sidebar.item icon="user-circle" :href="route('dashboard.profile')" :current="request()->routeIs('dashboard.profile')" wire:navigate>
+                            {{ __('My agent profile') }}
+                        </flux:sidebar.item>
+                    @endif
                 </flux:sidebar.group>
+
+                @if ($user->isAdmin())
+                    <flux:sidebar.group :heading="__('Office')" class="grid">
+                        <flux:sidebar.item icon="users" :href="route('dashboard.agents.index')" :current="request()->routeIs('dashboard.agents.*')" wire:navigate>
+                            {{ __('Agents') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="map" :href="route('dashboard.cities.index')" :current="request()->routeIs('dashboard.cities.*')" wire:navigate>
+                            {{ __('Cities') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="cog-6-tooth" :href="route('dashboard.settings')" :current="request()->routeIs('dashboard.settings')" wire:navigate>
+                            {{ __('Business details') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endif
             </flux:sidebar.nav>
 
             <flux:spacer />
 
             <flux:sidebar.nav>
-                <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                    {{ __('Repository') }}
-                </flux:sidebar.item>
-
-                <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
-                    {{ __('Documentation') }}
+                <flux:sidebar.item icon="arrow-top-right-on-square" :href="route('home')" target="_blank">
+                    {{ __('View website') }}
                 </flux:sidebar.item>
             </flux:sidebar.nav>
 
