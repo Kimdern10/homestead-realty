@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 
+// Short addresses people try first.
+Route::redirect('admin', 'dashboard');
+Route::redirect('admin/listings/create', '/dashboard/listings/create');
+
 Route::middleware(['auth', 'staff', 'verified'])->prefix('dashboard')->group(function () {
     Route::livewire('/', 'pages::dashboard.index')->name('dashboard');
 

@@ -4,6 +4,11 @@ use App\Models\Agent;
 use App\Models\Listing;
 use App\Models\User;
 
+test('/admin opens the dashboard', function () {
+    $this->get('/admin')->assertRedirect('/dashboard');
+    $this->actingAs(User::factory()->admin()->create())->followingRedirects()->get('/admin')->assertOk()->assertSee('Add a listing');
+});
+
 test('members are sent to their saved homes instead of the dashboard', function () {
     $this->actingAs(User::factory()->create())->get(route('dashboard'))->assertRedirect(route('saved'));
 });

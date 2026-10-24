@@ -179,7 +179,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m2 11 10-8 10 8"/><path d="M4.5 9.5V21h15V9.5"/><path d="M8.5 13h7M8.5 16.5h7"/></svg>
                         <span>Equal Housing Opportunity. We are committed to the Fair Housing Act and do not discriminate on the basis of race, color, religion, sex, disability, familial status or national origin.@if (filled($site['broker_license'])) Broker license {{ $site['broker_license'] }}.@endif</span>
                     </p>
-                    <p>© {{ now()->year }} {{ $site['business_name'] }} · <a href="{{ route('privacy') }}">Privacy policy</a> · <a href="{{ route('sitemap') }}">Sitemap</a></p>
+                    <p>© {{ now()->year }} {{ $site['business_name'] }} · <a href="{{ route('privacy') }}">Privacy policy</a> · <a href="{{ route('sitemap') }}">Sitemap</a> · <a href="{{ route('dashboard') }}">Agent &amp; admin login</a></p>
                 </div>
             </div>
         </footer>
