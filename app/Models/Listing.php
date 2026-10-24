@@ -49,6 +49,13 @@ use Illuminate\Support\Str;
  * @property Carbon $listed_at
  * @property Carbon|null $sold_at
  * @property int $views
+ * @property string $source
+ * @property string|null $external_id
+ * @property string|null $mls_name
+ * @property string|null $mls_number
+ * @property string|null $listing_office
+ * @property Carbon|null $synced_at
+ * @property bool $edited_by_admin
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Agent $agent
@@ -60,6 +67,7 @@ use Illuminate\Support\Str;
     'agent_id', 'city_id', 'title', 'slug', 'status', 'property_type', 'price', 'beds', 'baths', 'sqft', 'lot_acres',
     'year_built', 'garage_spaces', 'address', 'neighborhood', 'zip', 'latitude', 'longitude', 'description', 'amenities',
     'video_url', 'virtual_tour_url', 'hoa_fee', 'property_tax', 'is_featured', 'is_published', 'listed_at', 'sold_at',
+    'source', 'external_id', 'mls_name', 'mls_number', 'listing_office',
 ])]
 class Listing extends Model
 {
@@ -118,6 +126,8 @@ class Listing extends Model
             'listed_at' => 'date',
             'sold_at' => 'date',
             'views' => 'integer',
+            'synced_at' => 'datetime',
+            'edited_by_admin' => 'boolean',
         ];
     }
 
@@ -399,6 +409,29 @@ class Listing extends Model
     public function coverUrl(bool $small = true): ?string
     {
         return $this->coverPhoto?->url($small);
+    }
+
+    /**
+     * Whether the home came from the RentCast listings feed.
+     */
+    public function isFromApi(): bool
+    {
+        return $this->source !== 'manual';
+    }
+
+    /**
+     * A drawing to show on cards when the home has no photos yet (feed homes come without photos).
+     */
+    public function placeholderUrl(): string
+    {
+        $art = match ($this->property_type) {
+            PropertyType::Condo, PropertyType::Apartment => 'condo',
+            PropertyType::Townhouse, PropertyType::MultiFamily => 'townhouse',
+            PropertyType::Land => 'land',
+            default => 'house',
+        };
+
+        return asset("images/homes/{$art}.svg");
     }
 
     /**

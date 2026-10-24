@@ -18,7 +18,7 @@
                             <div>
                                 <h3 style="font-size: 19px">{{ $agent->name }}</h3>
                                 <p>{{ $agent->title ?: 'Real estate agent' }}</p>
-                                <p style="margin-top: 8px; color: var(--ink)"><b>{{ $agent->active_count }}</b> active · <b>{{ $agent->sold_count }}</b> sold</p>
+                                <p style="margin-top: 8px; color: var(--ink)"><b>{{ $agent->active_count }}</b> active · <b>{{ number_format($agent->soldCount()) }}</b> sold</p>
                             </div>
                         </a>
                     @endforeach

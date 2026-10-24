@@ -18,10 +18,15 @@ export default defineConfig({
                 bunny('Instrument Sans', {
                     weights: [400, 500, 600],
                 }),
-                bunny('Plus Jakarta Sans', {
+                bunny('Manrope', {
                     weights: [400, 500, 600, 700, 800],
-                    preload: [{ weight: 400 }, { weight: 700 }],
+                    preload: [{ weight: 500 }, { weight: 700 }],
                     fallbacks: ['Segoe UI', 'system-ui', 'sans-serif'],
+                }),
+                bunny('Fraunces', {
+                    weights: [500, 600],
+                    preload: [{ weight: 600 }],
+                    fallbacks: ['Georgia', 'serif'],
                 }),
             ],
         }),

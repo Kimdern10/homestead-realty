@@ -27,6 +27,7 @@
                     <h1>{{ $agent->name }}</h1>
                     <p class="profile__role">{{ $agent->title ?: 'Real estate agent' }} · {{ $site['business_name'] }}</p>
                     <div class="listing-meta">
+                        <span class="chip chip--strong"><x-icon name="key" /> {{ number_format($agent->soldCount()) }} {{ Str::plural('home', $agent->soldCount()) }} sold</span>
                         @if ($agent->years_experience)<span class="chip"><x-icon name="clock" /> {{ $agent->years_experience }} years' experience</span>@endif
                         @if ($agent->languages)<span class="chip"><x-icon name="user" /> Speaks {{ $agent->languages }}</span>@endif
                         @if ($agent->license_number)<span class="chip"><x-icon name="shield" /> License {{ $agent->license_number }}</span>@endif

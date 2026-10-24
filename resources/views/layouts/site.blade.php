@@ -14,6 +14,7 @@
     $metaDescription = $description ?: $site['seo_description'];
     $user = auth()->user();
     $links = [
+        'home' => ['Home', route('home')],
         'buy' => ['Buy', route('search', ['status' => 'for_sale'])],
         'rent' => ['Rent', route('search', ['status' => 'for_rent'])],
         'sold' => ['Sold', route('search', ['status' => 'sold'])],
@@ -53,9 +54,11 @@
 
         <script>document.documentElement.classList.add('js'); try { var t = localStorage.getItem('hr-theme'); if (t === 'light' || t === 'dark') { document.documentElement.dataset.theme = t; } } catch (e) {}</script>
 
-        @fonts('plus-jakarta-sans')
+        @fonts('manrope')
+        @fonts('fraunces')
         @vite(['resources/css/site.css', 'resources/js/site.js'])
 
+        @livewireStyles
         {{ $head ?? '' }}
     </head>
     <body>
@@ -63,10 +66,10 @@
 
         <header class="site-header">
             <div class="container">
-                <a class="brand" href="{{ route('home') }}" aria-label="{{ $site['business_name'] }} home"><x-site-logo /></a>
+                <a class="brand" wire:navigate.hover href="{{ route('home') }}" aria-label="{{ $site['business_name'] }} home"><x-site-logo /></a>
                 <nav class="site-nav" aria-label="Main">
                     @foreach ($links as $key => [$label, $href])
-                        <a href="{{ $href }}" @if ($current === $key) aria-current="page" @endif>{{ $label }}</a>
+                        <a href="{{ $href }}" wire:navigate.hover @if ($current === $key || ($key === 'home' && request()->routeIs('home'))) aria-current="page" @endif>{{ $label }}</a>
                     @endforeach
                 </nav>
                 <div class="header-tools">
@@ -107,15 +110,23 @@
             <div class="flash" role="status">{{ session('status') }}</div>
         @endif
 
-        <main id="main">
+        <main id="main" class="page-enter">
             {{ $slot }}
         </main>
+
+        <nav class="tabbar" aria-label="Quick links">
+            <a wire:navigate.hover href="{{ route('home') }}" @if (request()->routeIs('home')) aria-current="page" @endif><x-icon name="home" /><span>Home</span></a>
+            <a wire:navigate.hover href="{{ route('search', ['status' => 'for_sale']) }}" @if (in_array($current, ['buy', 'rent', 'sold'], true)) aria-current="page" @endif><x-icon name="search" /><span>Search</span></a>
+            <a wire:navigate.hover href="{{ route('search', ['view' => 'map']) }}"><x-icon name="map" /><span>Map</span></a>
+            <a wire:navigate.hover href="{{ route('saved') }}" @if ($current === 'saved') aria-current="page" @endif><x-icon name="heart" /><span>Saved</span></a>
+            <a wire:navigate.hover href="{{ $user?->isStaff() ? route('dashboard') : ($user ? route('profile.edit') : route('login')) }}"><x-icon name="user" /><span>{{ $user?->isStaff() ? 'Dashboard' : ($user ? 'Account' : 'Sign in') }}</span></a>
+        </nav>
 
         <footer class="site-footer">
             <div class="container">
                 <div class="footer__grid">
                     <div class="footer__brand">
-                        <a class="brand" href="{{ route('home') }}" aria-label="{{ $site['business_name'] }} home"><x-site-logo /></a>
+                        <a class="brand" wire:navigate.hover href="{{ route('home') }}" aria-label="{{ $site['business_name'] }} home"><x-site-logo /></a>
                         <p>{{ $site['tagline'] }}</p>
                     </div>
                     <div>
@@ -172,5 +183,6 @@
                 </div>
             </div>
         </footer>
+        @livewireScripts
     </body>
 </html>

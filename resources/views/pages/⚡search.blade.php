@@ -92,6 +92,16 @@ new class extends Component {
     }
 
     /**
+     * Show homes the ZIP panel just brought in from the live feed.
+     */
+    #[\Livewire\Attributes\On('listings-imported')]
+    public function refreshAfterImport(): void
+    {
+        unset($this->listings);
+        $this->dispatch('map-points', points: $this->mapPoints());
+    }
+
+    /**
      * Switch between list and map view.
      */
     public function setView(string $view): void
@@ -350,6 +360,10 @@ new class extends Component {
     </div>
 
     <div class="container">
+        @if (\App\Services\ZipLookup::isZip($q))
+            <livewire:zip-insights :zip="trim($q)" :status="$status" wire:key="zip-{{ trim($q) }}-{{ $status }}" />
+        @endif
+
         <div class="results-head">
             <div>
                 <h1>{{ $this->heading }}</h1>

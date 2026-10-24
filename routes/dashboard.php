@@ -24,5 +24,6 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('dashboard')->group(fun
         Route::livewire('cities/{city:id}/edit', 'pages::dashboard.cities.form')->name('dashboard.cities.edit');
 
         Route::livewire('settings', 'pages::dashboard.settings')->name('dashboard.settings');
+        Route::livewire('import', 'pages::dashboard.import')->name('dashboard.import');
     });
 });

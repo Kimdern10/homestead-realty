@@ -91,15 +91,15 @@ class SampleDataSeeder extends Seeder
     ];
 
     /**
-     * @var list<array{name: string, title: string, cities: list<string>, years: int, languages: string, phone: string, bio: string}>
+     * @var list<array{name: string, title: string, cities: list<string>, years: int, sold: int, languages: string, phone: string, bio: string}>
      */
     private const array AGENTS = [
-        ['name' => 'Sarah Mitchell', 'title' => 'Broker Associate', 'cities' => ['austin'], 'years' => 14, 'languages' => 'English', 'phone' => '(512) 555-0187', 'bio' => "Sarah has helped more than 300 families buy and sell homes across Austin. She grew up in Travis Heights and knows every street, school and taco truck in South Austin.\n\nBuyers love her honest advice and sellers love her pricing: her listings sell in an average of 18 days."],
-        ['name' => 'Elena Rodríguez', 'title' => 'Luxury Condo Specialist', 'cities' => ['miami'], 'years' => 11, 'languages' => 'English and Spanish', 'phone' => '(305) 555-0142', 'bio' => "Elena specializes in Brickell and Edgewater condos and waterfront homes in Coconut Grove. She works with local buyers and clients relocating from Latin America and Europe.\n\nShe'll walk you through HOA rules, flood insurance and everything else that's different about buying in Miami."],
-        ['name' => 'James Carter', 'title' => 'Realtor®', 'cities' => ['denver', 'phoenix'], 'years' => 9, 'languages' => 'English', 'phone' => '(720) 555-0119', 'bio' => "James splits his time between Denver and Phoenix, helping clients move between the mountains and the desert. Before real estate he was a builder, so he knows what to look for in an inspection.\n\nWeekends you'll find him on a trail or at an open house."],
-        ['name' => 'Olivia Brooks', 'title' => 'Realtor®', 'cities' => ['nashville', 'charlotte'], 'years' => 7, 'languages' => 'English', 'phone' => '(615) 555-0163', 'bio' => "Olivia is a relocation specialist for Nashville and Charlotte. Many of her clients are moving for work, so she's an expert at video tours and closing deals from a distance.\n\nShe answers messages fast and always explains each step in plain language."],
-        ['name' => 'David Chen', 'title' => 'Managing Broker', 'cities' => ['seattle'], 'years' => 16, 'languages' => 'English and Mandarin', 'phone' => '(206) 555-0128', 'bio' => "David leads our Seattle team. He has sold homes in every neighborhood from Ballard to Columbia City and is known for calm, careful negotiation in a competitive market.\n\nHe's also a first-time-buyer favorite: he runs a free homebuying class every month."],
-        ['name' => 'Marcus Johnson', 'title' => 'Realtor®', 'cities' => ['chicago'], 'years' => 12, 'languages' => 'English', 'phone' => '(312) 555-0174', 'bio' => "Marcus is a Chicago native who knows the city's greystones, two-flats and high-rises inside out. He helps investors find multi-family buildings and families find their first single-family home.\n\nHe has served on the board of the local Realtors' association for five years."],
+        ['name' => 'Sarah Mitchell', 'title' => 'Broker Associate', 'cities' => ['austin'], 'years' => 14, 'sold' => 312, 'languages' => 'English', 'phone' => '(512) 555-0187', 'bio' => "Sarah has helped more than 300 families buy and sell homes across Austin. She grew up in Travis Heights and knows every street, school and taco truck in South Austin.\n\nBuyers love her honest advice and sellers love her pricing: her listings sell in an average of 18 days."],
+        ['name' => 'Elena Rodríguez', 'title' => 'Luxury Condo Specialist', 'cities' => ['miami'], 'years' => 11, 'sold' => 186, 'languages' => 'English and Spanish', 'phone' => '(305) 555-0142', 'bio' => "Elena specializes in Brickell and Edgewater condos and waterfront homes in Coconut Grove. She works with local buyers and clients relocating from Latin America and Europe.\n\nShe'll walk you through HOA rules, flood insurance and everything else that's different about buying in Miami."],
+        ['name' => 'James Carter', 'title' => 'Realtor®', 'cities' => ['denver', 'phoenix'], 'years' => 9, 'sold' => 124, 'languages' => 'English', 'phone' => '(720) 555-0119', 'bio' => "James splits his time between Denver and Phoenix, helping clients move between the mountains and the desert. Before real estate he was a builder, so he knows what to look for in an inspection.\n\nWeekends you'll find him on a trail or at an open house."],
+        ['name' => 'Olivia Brooks', 'title' => 'Realtor®', 'cities' => ['nashville', 'charlotte'], 'years' => 7, 'sold' => 88, 'languages' => 'English', 'phone' => '(615) 555-0163', 'bio' => "Olivia is a relocation specialist for Nashville and Charlotte. Many of her clients are moving for work, so she's an expert at video tours and closing deals from a distance.\n\nShe answers messages fast and always explains each step in plain language."],
+        ['name' => 'David Chen', 'title' => 'Managing Broker', 'cities' => ['seattle'], 'years' => 16, 'sold' => 405, 'languages' => 'English and Mandarin', 'phone' => '(206) 555-0128', 'bio' => "David leads our Seattle team. He has sold homes in every neighborhood from Ballard to Columbia City and is known for calm, careful negotiation in a competitive market.\n\nHe's also a first-time-buyer favorite: he runs a free homebuying class every month."],
+        ['name' => 'Marcus Johnson', 'title' => 'Realtor®', 'cities' => ['chicago'], 'years' => 12, 'sold' => 231, 'languages' => 'English', 'phone' => '(312) 555-0174', 'bio' => "Marcus is a Chicago native who knows the city's greystones, two-flats and high-rises inside out. He helps investors find multi-family buildings and families find their first single-family home.\n\nHe has served on the board of the local Realtors' association for five years."],
     ];
 
     /**
@@ -171,7 +171,7 @@ class SampleDataSeeder extends Seeder
             ]);
         });
 
-        $agents = collect(self::AGENTS)->map(function (array $data) use ($password) {
+        $agents = collect(self::AGENTS)->map(function (array $data) use ($password, $cities) {
             $email = Str::of(Str::ascii($data['name']))->lower()->replace(' ', '.')->append('@homesteadrealty.example')->toString();
 
             $user = User::query()->create(['name' => $data['name'], 'email' => $email, 'password' => $password]);
@@ -190,6 +190,9 @@ class SampleDataSeeder extends Seeder
                 'bio' => $data['bio'],
                 'is_active' => true,
             ]);
+
+            $agent->forceFill(['homes_sold' => $data['sold']])->save();
+            $agent->cities()->sync($cities->only($data['cities'])->pluck('id')->all());
 
             return ['agent' => $agent, 'cities' => $data['cities']];
         });

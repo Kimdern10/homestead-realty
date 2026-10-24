@@ -1,6 +1,6 @@
 @props(['city', 'count' => null])
 
-<a {{ $attributes->class(['city-card']) }} href="{{ route('cities.show', $city) }}">
+<a {{ $attributes->class(['city-card']) }} wire:navigate.hover href="{{ route('cities.show', $city) }}">
     @if ($image = $city->imageUrl(small: true))
         <img src="{{ $image }}" alt="" loading="lazy" decoding="async" width="720" height="540">
     @endif

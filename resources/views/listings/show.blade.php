@@ -93,7 +93,7 @@
         </nav>
 
         @if ($photos->isEmpty())
-            <div class="gallery__empty"><span><x-icon name="camera" /> Photos coming soon</span></div>
+            <div class="gallery__empty"><img src="{{ $listing->placeholderUrl() }}" alt="" width="720" height="480"></div>
         @else
             <div class="gallery {{ $galleryClass }}">
                 @foreach ($photos->take($photos->count() < 5 ? 3 : 5) as $photo)
@@ -277,6 +277,17 @@
                         </div>
                         <p class="muted" style="margin-top: 10px; font-size: 14px">{{ $listing->fullAddress() }}</p>
                     </section>
+
+                    <section class="block">
+                        <h2>Nearby schools</h2>
+                        <livewire:nearby-schools :lat="(float) $listing->latitude" :lng="(float) $listing->longitude" />
+                    </section>
+                @endif
+
+                @if ($listing->isFromApi())
+                    <p class="source-note">
+                        Listing information from {{ $listing->mls_name ?: 'the local MLS' }}@if ($listing->mls_number) (#{{ $listing->mls_number }})@endif via RentCast @if ($listing->listing_office), listed by {{ $listing->listing_office }}@endif. Details are believed accurate but not guaranteed; please confirm with the agent.
+                    </p>
                 @endif
             </div>
 

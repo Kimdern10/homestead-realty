@@ -36,6 +36,13 @@ class HomeController extends Controller
         $agents = Agent::query()->active()->withCount(['listings as active_count' => fn ($query) => $query->published()->whereIn('status', [ListingStatus::ForSale, ListingStatus::ForRent])])
             ->orderByDesc('active_count')->take(4)->get();
 
-        return view('home', compact('featured', 'newest', 'rentals', 'cities', 'agents'));
+        $stats = [
+            'for_sale' => Listing::query()->published()->where('status', ListingStatus::ForSale)->count(),
+            'for_rent' => Listing::query()->published()->where('status', ListingStatus::ForRent)->count(),
+            'cities' => City::query()->count(),
+            'sold' => (int) Agent::query()->active()->get()->sum(fn (Agent $agent) => $agent->soldCount()),
+        ];
+
+        return view('home', compact('featured', 'newest', 'rentals', 'cities', 'agents', 'stats'));
     }
 }

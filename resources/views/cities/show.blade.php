@@ -18,7 +18,7 @@
 
     <section class="city-hero">
         @if ($image = $city->imageUrl())
-            <img src="{{ $image }}" alt="" fetchpriority="high" width="1600" height="900">
+            <img src="{{ $image }}" alt="" fetchpriority="high" width="1600" height="900" data-parallax>
         @endif
         <div class="container">
             <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ route('cities.index') }}">Cities</a><span aria-hidden="true">/</span><span>{{ $city->state }}</span></nav>

@@ -26,7 +26,8 @@
             <img class="hero__img" src="{{ $heroListing->coverUrl(false) }}" alt="" fetchpriority="high" width="1600" height="1067">
         @endif
         <div class="container">
-            <h1>{{ $site['hero_title'] }}</h1>
+            @php($heroWords = explode(' ', trim($site['hero_title'])))
+            <h1>{{ implode(' ', array_slice($heroWords, 0, max(1, count($heroWords) - 2))) }} @if (count($heroWords) > 2)<em>{{ implode(' ', array_slice($heroWords, -2)) }}</em>@endif</h1>
             <p>{{ $site['hero_text'] }}</p>
 
             <form class="hero__search" action="{{ route('search') }}" method="get" role="search">
@@ -53,6 +54,15 @@
         </div>
     </section>
 
+    <div class="container">
+        <div class="stats-band reveal">
+            <div><b data-count="{{ $stats['for_sale'] }}">{{ number_format($stats['for_sale']) }}</b><span>Homes for sale</span></div>
+            <div><b data-count="{{ $stats['for_rent'] }}">{{ number_format($stats['for_rent']) }}</b><span>Homes for rent</span></div>
+            <div><b data-count="{{ $stats['cities'] }}">{{ number_format($stats['cities']) }}</b><span>Cities covered</span></div>
+            <div><b data-count="{{ $stats['sold'] }}">{{ number_format($stats['sold']) }}</b><span>Homes sold by our agents</span></div>
+        </div>
+    </div>
+
     @if ($featured->isNotEmpty())
         <section class="section">
             <div class="container">
@@ -64,7 +74,7 @@
                     </div>
                     <a class="link" href="{{ route('search') }}">See all homes <x-icon name="arrow-right" /></a>
                 </div>
-                <div class="grid grid--cards">
+                <div class="grid grid--cards" data-stagger>
                     @foreach ($featured as $listing)
                         <x-listing-card :listing="$listing" :lazy="! $loop->first" />
                     @endforeach
@@ -81,23 +91,23 @@
                     <h2>Everything you need to move</h2>
                 </div>
             </div>
-            <div class="how">
-                <div class="how__item reveal">
+            <div class="how" data-stagger>
+                <div class="how__item">
                     <div class="how__icon"><x-icon name="map" /></div>
                     <h3>Search on a map</h3>
                     <p>Filter by price, beds, baths and home type, then see exactly where every home sits.</p>
                 </div>
-                <div class="how__item reveal">
+                <div class="how__item">
                     <div class="how__icon"><x-icon name="heart" /></div>
                     <h3>Save what you love</h3>
                     <p>Create a free account to keep your favorite homes and searches in one place.</p>
                 </div>
-                <div class="how__item reveal">
+                <div class="how__item">
                     <div class="how__icon"><x-icon name="calendar" /></div>
                     <h3>Tour on your schedule</h3>
                     <p>Pick a day and time on any listing, in person or by video chat. The agent confirms with you.</p>
                 </div>
-                <div class="how__item reveal">
+                <div class="how__item">
                     <div class="how__icon"><x-icon name="calculator" /></div>
                     <h3>Know your payment</h3>
                     <p>Every home for sale has a payment calculator with taxes, insurance and HOA included.</p>
@@ -136,9 +146,9 @@
                     </div>
                     <a class="link" href="{{ route('cities.index') }}">All cities <x-icon name="arrow-right" /></a>
                 </div>
-                <div class="grid grid--cities">
+                <div class="grid grid--cities" data-stagger>
                     @foreach ($cities as $city)
-                        <x-city-card :city="$city" :count="$city->available_count" class="reveal" />
+                        <x-city-card :city="$city" :count="$city->available_count" />
                     @endforeach
                 </div>
             </div>
@@ -174,9 +184,9 @@
                     </div>
                     <a class="link" href="{{ route('agents.index') }}">All agents <x-icon name="arrow-right" /></a>
                 </div>
-                <div class="grid grid--agents">
+                <div class="grid grid--agents" data-stagger>
                     @foreach ($agents as $agent)
-                        <x-agent-card :agent="$agent" class="reveal" />
+                        <x-agent-card :agent="$agent" />
                     @endforeach
                 </div>
             </div>

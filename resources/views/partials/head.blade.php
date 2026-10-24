@@ -9,7 +9,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
 
-@fonts('plus-jakarta-sans')
+@fonts('manrope')
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance

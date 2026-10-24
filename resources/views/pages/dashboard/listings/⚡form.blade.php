@@ -348,6 +348,11 @@ new #[Title('Listing')] class extends Component {
             'sold_at' => $status === ListingStatus::Sold ? ($nullable('sold_at') ?? today()->toDateString()) : null,
         ]);
 
+        // A feed home the office has changed is never overwritten by a later import.
+        if ($listing->exists && $listing->isFromApi()) {
+            $listing->edited_by_admin = true;
+        }
+
         $stored = [];
 
         foreach ($this->newPhotos as $photo) {
@@ -390,6 +395,14 @@ new #[Title('Listing')] class extends Component {
             @endif
         </div>
         <flux:text class="mt-1">{{ __('Photos are resized and compressed automatically, so phone photos are fine. Fields marked * are required.') }}</flux:text>
+        @if ($listing?->isFromApi())
+            <flux:callout icon="cloud-arrow-down" class="mt-4">
+                <flux:callout.text>
+                    {{ __('Imported from RentCast') }}@if ($listing->mls_number) · {{ $listing->mls_name }} #{{ $listing->mls_number }}@endif @if ($listing->listing_office) · {{ __('Listed by') }} {{ $listing->listing_office }}@endif.
+                    {{ $listing->edited_by_admin ? __('You have edited this home, so imports will not change it.') : __('Once you save changes here, later imports will not overwrite them.') }}
+                </flux:callout.text>
+            </flux:callout>
+        @endif
     </div>
 
     <form wire:submit="save" class="flex flex-col gap-8">

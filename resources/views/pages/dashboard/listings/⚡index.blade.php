@@ -25,6 +25,9 @@ new #[Title('Listings')] class extends Component {
     #[Url(except: '')]
     public string $agent = '';
 
+    #[Url(except: '')]
+    public string $source = '';
+
     /**
      * Start again from page one when a filter changes.
      */
@@ -47,6 +50,8 @@ new #[Title('Listings')] class extends Component {
             ->when(! $user->isAdmin(), fn (Builder $query) => $query->where('agent_id', $user->agent->id))
             ->when($user->isAdmin() && $this->agent !== '', fn (Builder $query) => $query->where('agent_id', (int) $this->agent))
             ->when(ListingStatus::tryFrom($this->status), fn (Builder $query, ListingStatus $status) => $query->where('status', $status))
+            ->when($this->source === 'feed', fn (Builder $query) => $query->where('source', '!=', 'manual'))
+            ->when($this->source === 'manual', fn (Builder $query) => $query->where('source', 'manual'))
             ->when(trim($this->search) !== '', function (Builder $query) {
                 $like = '%'.trim($this->search).'%';
                 $query->where(fn (Builder $where) => $where->where('address', 'like', $like)->orWhere('title', 'like', $like)->orWhere('zip', trim($this->search))->orWhereHas('city', fn (Builder $city) => $city->where('name', 'like', $like)));
@@ -74,7 +79,7 @@ new #[Title('Listings')] class extends Component {
         $listing = Listing::query()->findOrFail($id);
         $this->authorize('update', $listing);
 
-        $listing->update(['is_published' => ! $listing->is_published]);
+        $listing->forceFill(['is_published' => ! $listing->is_published, 'edited_by_admin' => $listing->edited_by_admin || $listing->isFromApi()])->save();
         Flux::toast($listing->is_published ? __('Listing is live on the website.') : __('Listing hidden from the website.'), variant: 'success');
     }
 
@@ -87,10 +92,11 @@ new #[Title('Listings')] class extends Component {
         $this->authorize('update', $listing);
         $newStatus = ListingStatus::from($status);
 
-        $listing->update([
+        $listing->forceFill([
             'status' => $newStatus,
             'sold_at' => $newStatus === ListingStatus::Sold ? ($listing->sold_at ?? today()) : null,
-        ]);
+            'edited_by_admin' => $listing->edited_by_admin || $listing->isFromApi(),
+        ])->save();
 
         Flux::toast(__('Marked as :status.', ['status' => strtolower($newStatus->label())]), variant: 'success');
     }
@@ -120,13 +126,18 @@ new #[Title('Listings')] class extends Component {
         <flux:button variant="primary" icon="plus" :href="route('dashboard.listings.create')" wire:navigate data-test="add-listing">{{ __('Add a listing') }}</flux:button>
     </div>
 
-    <div class="grid gap-3 sm:grid-cols-3">
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" :placeholder="__('Search address, city or ZIP')" :aria-label="__('Search listings')" />
         <flux:select wire:model.live="status" :aria-label="__('Status')">
             <flux:select.option value="">{{ __('Any status') }}</flux:select.option>
             @foreach (\App\Enums\ListingStatus::options() as $value => $label)
                 <flux:select.option :value="$value">{{ $label }}</flux:select.option>
             @endforeach
+        </flux:select>
+        <flux:select wire:model.live="source" :aria-label="__('Source')">
+            <flux:select.option value="">{{ __('All sources') }}</flux:select.option>
+            <flux:select.option value="manual">{{ __('Added by us') }}</flux:select.option>
+            <flux:select.option value="feed">{{ __('From the live feed') }}</flux:select.option>
         </flux:select>
         @if (auth()->user()->isAdmin())
             <flux:select wire:model.live="agent" :aria-label="__('Agent')">
@@ -154,6 +165,7 @@ new #[Title('Listings')] class extends Component {
                             <span class="font-semibold">{{ $listing->priceLabel() }}</span>
                             <flux:badge size="sm" :color="match ($listing->status) { \App\Enums\ListingStatus::ForSale => 'red', \App\Enums\ListingStatus::ForRent => 'blue', \App\Enums\ListingStatus::Pending => 'amber', default => 'zinc' }">{{ $listing->status->label() }}</flux:badge>
                             @unless ($listing->is_published)<flux:badge size="sm" color="zinc" icon="eye-slash">{{ __('Draft') }}</flux:badge>@endunless
+                            @if ($listing->isFromApi())<flux:badge size="sm" color="sky" icon="cloud-arrow-down">{{ __('Live feed') }}</flux:badge>@endif
                             @if ($listing->is_featured)<flux:badge size="sm" color="amber" icon="star">{{ __('Featured') }}</flux:badge>@endif
                         </div>
                         <div class="truncate text-sm">{{ $listing->fullAddress() }}</div>

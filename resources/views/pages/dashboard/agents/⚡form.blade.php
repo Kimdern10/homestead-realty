@@ -24,6 +24,24 @@ new #[Title('Agent')] class extends Component {
 
     public bool $is_active = true;
 
+    /** @var list<string> */
+    public array $cityIds = [];
+
+    public string $zip_codes = '';
+
+    public string $homes_sold = '';
+
+    /**
+     * Cities the admin can give the agent.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Models\City>
+     */
+    #[\Livewire\Attributes\Computed]
+    public function cities()
+    {
+        return \App\Models\City::query()->ordered()->get(['id', 'name', 'state_code']);
+    }
+
     /**
      * Fill the form when editing.
      */
@@ -37,6 +55,9 @@ new #[Title('Agent')] class extends Component {
         $this->fillProfile($agent);
         $this->login_email = $agent->user->email;
         $this->is_active = $agent->is_active;
+        $this->cityIds = $agent->cities()->pluck('cities.id')->map(fn ($id) => (string) $id)->all();
+        $this->zip_codes = implode(', ', $agent->zipCodeList());
+        $this->homes_sold = (string) $agent->homes_sold;
     }
 
     /**
@@ -51,6 +72,10 @@ new #[Title('Agent')] class extends Component {
             'login_email' => ['required', 'email', 'max:150', Rule::unique('users', 'email')->ignore($this->agent?->user_id)],
             'password' => $this->agent ? ['nullable', 'string', 'min:8'] : ['required', 'string', 'min:8'],
             'is_active' => ['boolean'],
+            'cityIds' => ['array'],
+            'cityIds.*' => [Rule::exists('cities', 'id')],
+            'zip_codes' => ['nullable', 'string', 'max:2000', 'regex:/^[\d\s,;]*$/'],
+            'homes_sold' => ['nullable', 'integer', 'min:0', 'max:100000'],
         ];
     }
 
@@ -64,6 +89,7 @@ new #[Title('Agent')] class extends Component {
         return [
             ...$this->profileMessages(),
             'login_email.unique' => 'Someone already uses this email to log in.',
+            'zip_codes.regex' => 'List 5-digit ZIP codes separated by commas, e.g. 78704, 78702.',
         ];
     }
 
@@ -91,7 +117,12 @@ new #[Title('Agent')] class extends Component {
                 'user_id' => $user->id,
                 'slug' => $agent->slug ?? $this->uniqueSlug(),
                 'is_active' => $this->is_active,
+                'zip_codes' => $this->zip_codes !== '' ? $this->zip_codes : null,
+                'homes_sold' => $this->homes_sold !== '' ? (int) $this->homes_sold : null,
             ])->save();
+
+            $agent->forceFill(['zip_codes' => implode(', ', $agent->zipCodeList()) ?: null])->save();
+            $agent->cities()->sync(array_map('intval', $this->cityIds));
         });
 
         Flux::toast($this->agent ? __('Agent saved.') : __('Agent added. Share the login email and password with them.'), variant: 'success');
@@ -133,6 +164,22 @@ new #[Title('Agent')] class extends Component {
         </flux:fieldset>
 
         @include('partials.agent-fields')
+
+        <flux:fieldset>
+            <flux:legend>{{ __('Areas covered') }}</flux:legend>
+            <div class="grid gap-5">
+                <flux:text class="text-sm">{{ __('New homes from the live feed in these places are given to this agent. A ZIP code match wins over a city match.') }}</flux:text>
+                <flux:checkbox.group wire:model="cityIds" :label="__('Cities')">
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach ($this->cities as $city)
+                            <flux:checkbox :value="(string) $city->id" :label="$city->label()" wire:key="area-{{ $city->id }}" />
+                        @endforeach
+                    </div>
+                </flux:checkbox.group>
+                <flux:textarea wire:model="zip_codes" rows="2" :label="__('ZIP codes')" placeholder="78704, 78702, 78751" :description="__('Separate with commas.')" />
+                <flux:input wire:model="homes_sold" type="number" min="0" :label="__('Homes sold (shown on the profile)')" :description="__('Their career total. Leave empty to count the sold homes on this website.')" class="max-w-60" />
+            </div>
+        </flux:fieldset>
 
         <flux:switch wire:model="is_active" :label="__('Active')" :description="__('Inactive agents cannot log in, and their profile and listings are hidden from the website.')" />
 

@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    'rentcast' => [
+        'key' => env('RENTCAST_API_KEY'),
+        'url' => env('RENTCAST_API_URL', 'https://api.rentcast.io/v1'),
+        // Homes asked for per request. One request counts against the monthly allowance whatever the number.
+        'limit' => (int) env('RENTCAST_LIMIT', 50),
+        // How long a ZIP's results are reused before asking RentCast again.
+        'cache_hours' => (int) env('RENTCAST_CACHE_HOURS', 72),
+        // Stop sending requests after this many in a month (the free plan includes 50).
+        'monthly_limit' => (int) env('RENTCAST_MONTHLY_LIMIT', 50),
+    ],
+
 ];
