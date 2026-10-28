@@ -24,7 +24,7 @@ use Illuminate\Support\Str;
  * Fills an empty website with realistic demo cities, agents, homes and enquiries.
  *
  * Photos come from database/seeders/photos (free Unsplash images). Demo logins use the
- * password in SAMPLE_PASSWORD (default "password"); in production they get random passwords.
+ * password "password"; in production they get random passwords.
  */
 class SampleDataSeeder extends Seeder
 {
@@ -146,7 +146,7 @@ class SampleDataSeeder extends Seeder
         $this->command?->info('Optimizing sample photos (this takes a minute)…');
         $this->preparePhotos($images);
 
-        $password = app()->isProduction() ? Str::password(24) : (string) env('SAMPLE_PASSWORD', 'password');
+        $password = app()->isProduction() ? Str::password(24) : 'password';
 
         if (! app()->isProduction()) {
             User::query()->firstOrCreate(['email' => 'admin@homesteadrealty.example'], [
@@ -220,7 +220,8 @@ class SampleDataSeeder extends Seeder
 
                 $style = $type === PropertyType::House ? self::HOUSE_STYLES[$counter % count(self::HOUSE_STYLES)] : strtolower($type->label());
                 $title = Str::ucfirst($style).' in '.$area;
-                $listedDaysAgo = $status === ListingStatus::Sold ? 60 + $counter : ($counter * 5) % 45;
+                $soldAt = $status === ListingStatus::Sold ? now()->subDays(10 + $counter % 30) : null;
+                $listedDaysAgo = $soldAt !== null ? 60 + $counter : ($counter * 5) % 45;
 
                 $listing = Listing::query()->create([
                     'agent_id' => $cityAgents[$index % $cityAgents->count()]->id,
@@ -250,7 +251,7 @@ class SampleDataSeeder extends Seeder
                     'is_featured' => $index === 0 || ($index === 6 && $counter % 3 === 0),
                     'is_published' => true,
                     'listed_at' => now()->subDays($listedDaysAgo),
-                    'sold_at' => $status === ListingStatus::Sold ? now()->subDays(10 + $counter % 30) : null,
+                    'sold_at' => $soldAt,
                 ]);
 
                 $listing->forceFill(['views' => 40 + (($counter * 53) % 900)])->save();

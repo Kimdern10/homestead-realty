@@ -1,15 +1,14 @@
 <?php
 
-use App\Concerns\AgentProfileForm;
+use App\Livewire\AgentProfileComponent;
 use App\Models\Agent;
 use App\Support\ImageOptimizer;
 use Flux\Flux;
 use Livewire\Attributes\Title;
-use Livewire\Component;
 use Livewire\WithFileUploads;
 
-new #[Title('My agent profile')] class extends Component {
-    use AgentProfileForm, WithFileUploads;
+new #[Title('My agent profile')] class extends AgentProfileComponent {
+    use WithFileUploads;
 
     /**
      * Only agents have a profile to edit.

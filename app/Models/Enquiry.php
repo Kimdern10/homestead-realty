@@ -101,7 +101,7 @@ class Enquiry extends Model
     protected function visibleTo(Builder $query, User $user): void
     {
         if (! $user->isAdmin()) {
-            $query->where('agent_id', $user->agent?->id ?? 0);
+            $query->where('agent_id', $user->agent->id ?? 0);
         }
     }
 

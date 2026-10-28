@@ -46,7 +46,28 @@ class SchoolFinder
             Cache::put($key, $schools, now()->addDays(30));
         }
 
-        return array_slice($schools, 0, $limit);
+        return array_values(array_map(
+            fn (array $school): array => $this->shape($school),
+            array_slice(array_filter((array) $schools, 'is_array'), 0, $limit),
+        ));
+    }
+
+    /**
+     * One school with every field in its expected type (cached values come back untyped).
+     *
+     * @param  array<mixed>  $school
+     * @return array{name: string, level: string|null, kind: string|null, miles: float, lat: float, lng: float}
+     */
+    private function shape(array $school): array
+    {
+        return [
+            'name' => (string) ($school['name'] ?? ''),
+            'level' => isset($school['level']) ? (string) $school['level'] : null,
+            'kind' => isset($school['kind']) ? (string) $school['kind'] : null,
+            'miles' => (float) ($school['miles'] ?? 0),
+            'lat' => (float) ($school['lat'] ?? 0),
+            'lng' => (float) ($school['lng'] ?? 0),
+        ];
     }
 
     /**
@@ -111,7 +132,7 @@ class SchoolFinder
             }
         }
 
-        return collect($schools)->sortBy('miles')->unique('name')->values()->all();
+        return array_values(collect($schools)->sortBy('miles')->unique('name')->all());
     }
 
     /**
@@ -137,7 +158,7 @@ class SchoolFinder
             return null;
         }
 
-        return collect((array) $response->json('elements'))
+        return array_values(collect((array) $response->json('elements'))
             ->map(function (array $element) use ($lat, $lng): ?array {
                 $tags = $element['tags'] ?? [];
                 $schoolLat = $element['lat'] ?? $element['center']['lat'] ?? null;
@@ -163,8 +184,7 @@ class SchoolFinder
             ->filter()
             ->sortBy('miles')
             ->unique('name')
-            ->values()
-            ->all();
+            ->all());
     }
 
     /**

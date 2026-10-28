@@ -24,7 +24,7 @@ class EnquiryFactory extends Factory
             'type' => EnquiryType::Message,
             'status' => EnquiryStatus::New,
             'listing_id' => Listing::factory(),
-            'agent_id' => fn (array $attributes) => Listing::query()->find($attributes['listing_id'])?->agent_id,
+            'agent_id' => fn (array $attributes) => Listing::query()->whereKey($attributes['listing_id'])->value('agent_id'),
             'name' => fake()->name(),
             'email' => fake()->safeEmail(),
             'phone' => fake()->numerify('(512) 555-####'),

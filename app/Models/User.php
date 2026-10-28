@@ -128,6 +128,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
      */
     public function favoriteListingIds(): array
     {
-        return once(fn (): array => $this->favorites()->pluck('listings.id')->map(fn ($id): int => (int) $id)->all());
+        return once(fn (): array => array_values($this->favorites()->pluck('listings.id')->map(fn ($id): int => (int) $id)->all()));
     }
 }

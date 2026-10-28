@@ -1,7 +1,7 @@
 <?php
 
-use App\Concerns\AgentProfileForm;
 use App\Enums\UserRole;
+use App\Livewire\AgentProfileComponent;
 use App\Models\Agent;
 use App\Models\User;
 use App\Support\ImageOptimizer;
@@ -10,11 +10,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
-use Livewire\Component;
 use Livewire\WithFileUploads;
 
-new #[Title('Agent')] class extends Component {
-    use AgentProfileForm, WithFileUploads;
+new #[Title('Agent')] class extends AgentProfileComponent {
+    use WithFileUploads;
 
     public ?Agent $agent = null;
 

@@ -1,17 +1,18 @@
 <?php
 
-namespace App\Concerns;
+namespace App\Livewire;
 
 use App\Models\Agent;
 use App\Support\ImageOptimizer;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
  * The public profile fields of an agent, shared by the admin's agent form
- * and the page where agents edit their own profile.
+ * and the page where agents edit their own profile (both extend this class).
  */
-trait AgentProfileForm
+abstract class AgentProfileComponent extends Component
 {
     public string $name = '';
 

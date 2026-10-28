@@ -97,7 +97,7 @@ class ListingImporter
         }
 
         $city = $this->city($cityName, $stateCode, $record);
-        $agent = $listing?->agent ?? $this->agentFor($zip, $city);
+        $agent = $listing->agent ?? $this->agentFor($zip, $city);
 
         if ($agent === null) {
             throw new RuntimeException('Add at least one active agent before importing homes.');

@@ -468,6 +468,6 @@ class Listing extends Model
      */
     public function imagePaths(): array
     {
-        return $this->photos->flatMap(fn (ListingPhoto $photo): array => $photo->paths())->values()->all();
+        return array_values($this->photos->flatMap(fn (ListingPhoto $photo): array => $photo->paths())->all());
     }
 }
