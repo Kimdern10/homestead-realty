@@ -132,6 +132,13 @@ document.addEventListener('click', async (event) => {
             return;
         }
 
+        // Signed in but the email isn't confirmed yet: go and enter the code.
+        if (response.status === 403) {
+            window.location.href = '/email/verify';
+
+            return;
+        }
+
         const data = await response.json();
         setFavorite(button.dataset.favorite, Boolean(data.saved));
         toast(data.saved ? 'Saved to your homes' : 'Removed from saved homes');

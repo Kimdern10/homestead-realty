@@ -132,6 +132,12 @@ new class extends Component {
             return;
         }
 
+        if (! $user->hasVerifiedEmail()) {
+            $this->redirectRoute('verification.notice');
+
+            return;
+        }
+
         $filters = $this->filters();
 
         $alreadySaved = $user->savedSearches()->get()->contains(fn (SavedSearch $saved): bool => $saved->filters == $filters);
