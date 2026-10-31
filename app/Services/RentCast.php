@@ -30,6 +30,30 @@ class RentCast
     }
 
     /**
+     * Whether the admin has switched live homes on (off by default, so nothing is fetched or charged).
+     */
+    public function isEnabled(): bool
+    {
+        return Setting::get('live_feed_enabled') === '1';
+    }
+
+    /**
+     * Switch live homes on or off.
+     */
+    public function setEnabled(bool $enabled): void
+    {
+        Setting::put(['live_feed_enabled' => $enabled ? '1' : '0']);
+    }
+
+    /**
+     * Whether homes can be fetched right now: switched on and a key is set.
+     */
+    public function isActive(): bool
+    {
+        return $this->isEnabled() && $this->isConfigured();
+    }
+
+    /**
      * How many requests were sent to RentCast this month.
      */
     public function requestsThisMonth(): int
@@ -74,6 +98,10 @@ class RentCast
      */
     public function listings(string $type, array $query): array
     {
+        if (! $this->isEnabled()) {
+            throw new RuntimeException('Live homes are switched off. Turn them on in Dashboard › Live homes first.');
+        }
+
         $cacheKey = $this->cacheKey($type, $query);
 
         if (Cache::has($cacheKey)) {

@@ -38,7 +38,7 @@ new #[Lazy] class extends Component {
 
         $type = $this->status === 'for_rent' ? 'rent' : 'sale';
 
-        if ($this->status === 'sold' || ! $rentCast->isConfigured() || Setting::get('auto_fetch_zip') === '0' || $rentCast->isCached($type, ['zipCode' => $this->zip])) {
+        if ($this->status === 'sold' || ! $rentCast->isActive() || Setting::get('auto_fetch_zip') === '0' || $rentCast->isCached($type, ['zipCode' => $this->zip])) {
             return;
         }
 

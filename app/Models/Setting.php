@@ -42,6 +42,8 @@ class Setting extends Model
         'seo_title' => 'Homes for sale and rent',
         'seo_description' => 'Search homes for sale and rent with Homestead Realty. Photos, prices, maps, mortgage estimates and local agents in cities across the USA.',
         'mortgage_rate' => '6.5',
+        // Live homes from RentCast are off until the admin switches them on.
+        'live_feed_enabled' => '0',
         'privacy_policy' => '',
     ];
 

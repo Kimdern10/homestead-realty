@@ -14,6 +14,7 @@ use Livewire\Livewire;
 
 beforeEach(function () {
     config(['services.rentcast.key' => 'test-key', 'services.rentcast.monthly_limit' => 50]);
+    Setting::put(['live_feed_enabled' => '1']);
 });
 
 /**
@@ -215,4 +216,43 @@ test('feed homes show the source and a drawing until photos are added', function
         ->assertSee('via RentCast')
         ->assertSee('Gottesman Residential R.E.')
         ->assertSee('images/homes/house.svg');
+});
+
+test('live homes are off by default and fetch nothing', function () {
+    Setting::put(['live_feed_enabled' => '0']);
+    Agent::factory()->create();
+    Http::fake();
+
+    expect(app(RentCast::class)->isEnabled())->toBeFalse()
+        ->and(fn () => app(ListingImporter::class)->import(['zipCode' => '78723']))->toThrow(RuntimeException::class, 'switched off');
+
+    Livewire::withoutLazyLoading()->test('zip-insights', ['zip' => '78723'])->assertSet('added', 0);
+
+    Http::assertNotSent(fn ($request) => str_contains($request->url(), 'rentcast'));
+    expect(Listing::query()->count())->toBe(0);
+});
+
+test('the admin can switch live homes on and off with one button', function () {
+    Setting::put(['live_feed_enabled' => '0']);
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->get(route('dashboard.import'))
+        ->assertOk()
+        ->assertSee('Live homes are OFF')
+        ->assertSee('Add a house yourself')
+        ->assertDontSee('Fetch homes');
+
+    Livewire::actingAs($admin)->test('pages::dashboard.import')
+        ->call('toggleFeed')
+        ->assertRedirect(route('dashboard.import'));
+
+    $this->actingAs($admin)->get(route('dashboard.import'))
+        ->assertSee('Live homes are ON')
+        ->assertSee('Fetch homes');
+
+    expect(app(RentCast::class)->isEnabled())->toBeTrue();
+
+    Livewire::actingAs($admin)->test('pages::dashboard.import')->call('toggleFeed');
+
+    expect(app(RentCast::class)->isEnabled())->toBeFalse();
 });

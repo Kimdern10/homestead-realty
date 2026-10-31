@@ -12,7 +12,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Import homes')] class extends Component {
+new #[Title('Live homes')] class extends Component {
     public string $by = 'zip';
 
     public string $zip = '';
@@ -96,6 +96,24 @@ new #[Title('Import homes')] class extends Component {
     }
 
     /**
+     * Turn live homes from RentCast on or off. While off, nothing is fetched or charged.
+     */
+    public function toggleFeed(): void
+    {
+        $enabled = ! $this->rentCast->isEnabled();
+        $this->rentCast->setEnabled($enabled);
+        unset($this->rentCast);
+
+        Flux::toast(
+            $enabled ? __('Live homes switched on.') : __('Live homes switched off. Add houses yourself from Listings.'),
+            variant: 'success',
+        );
+
+        // Reload the page so the On/Off badge in the sidebar updates too.
+        $this->redirectRoute('dashboard.import', navigate: true);
+    }
+
+    /**
      * Save who gets new feed homes and whether visitor ZIP searches fetch live homes.
      */
     public function saveSettings(): void
@@ -109,17 +127,43 @@ new #[Title('Import homes')] class extends Component {
 
 <div class="mx-auto flex w-full max-w-4xl flex-col gap-6">
     <div>
-        <flux:heading size="xl" level="1">{{ __('Import live homes') }}</flux:heading>
-        <flux:text class="mt-1">{{ __('Bring in real homes for sale and rent anywhere in the USA from RentCast. Imported homes become normal listings: you can edit them, add photos, assign an agent and mark them sold or rented. Homes you edit are never overwritten by a later import.') }}</flux:text>
+        <flux:heading size="xl" level="1">{{ __('Live homes (RentCast)') }}</flux:heading>
+        <flux:text class="mt-1">{{ __('Optional: bring in real homes for sale and rent anywhere in the USA from RentCast, a paid service. Imported homes become normal listings that you can edit, add photos to and mark as sold or rented.') }}</flux:text>
     </div>
 
-    @if (! $this->rentCast->isConfigured())
+    <div @class([
+        'flex flex-wrap items-center justify-between gap-4 rounded-xl border p-5',
+        'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/40' => $this->rentCast->isEnabled(),
+        'border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900' => ! $this->rentCast->isEnabled(),
+    ]) data-test="feed-status">
+        <div class="flex items-start gap-3">
+            <span @class(['mt-1.5 size-3 shrink-0 rounded-full', 'bg-green-500' => $this->rentCast->isEnabled(), 'bg-zinc-400' => ! $this->rentCast->isEnabled()])></span>
+            <div>
+                <div class="font-semibold">{{ $this->rentCast->isEnabled() ? __('Live homes are ON') : __('Live homes are OFF') }}</div>
+                <flux:text class="text-sm">
+                    {{ $this->rentCast->isEnabled()
+                        ? __('Homes can be imported from RentCast, and visitor ZIP searches can fetch new homes.')
+                        : __('Nothing is fetched from RentCast and nothing is charged. You and your agents add houses yourselves from Listings › Add a listing.') }}
+                </flux:text>
+            </div>
+        </div>
+        <flux:button wire:click="toggleFeed" :variant="$this->rentCast->isEnabled() ? 'filled' : 'primary'" :icon="$this->rentCast->isEnabled() ? 'pause' : 'play'" data-test="toggle-feed">
+            {{ $this->rentCast->isEnabled() ? __('Switch off') : __('Switch on') }}
+        </flux:button>
+    </div>
+
+    @unless ($this->rentCast->isEnabled())
+        <flux:button variant="primary" icon="plus" :href="route('dashboard.listings.create')" wire:navigate class="self-start">{{ __('Add a house yourself') }}</flux:button>
+    @endunless
+
+    @if ($this->rentCast->isEnabled() && ! $this->rentCast->isConfigured())
         <flux:callout icon="key" color="amber">
             <flux:callout.heading>{{ __('Add your RentCast API key') }}</flux:callout.heading>
             <flux:callout.text>{{ __('Sign up free at rentcast.io, copy your API key, then add this line to the .env file and save:') }} <code class="rounded bg-zinc-100 px-1 dark:bg-zinc-800">RENTCAST_API_KEY=your-key</code></flux:callout.text>
         </flux:callout>
     @endif
 
+    @if ($this->rentCast->isEnabled())
     <div class="grid gap-3 sm:grid-cols-3">
         <div class="rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
             <flux:text class="text-sm">{{ __('Requests used this month') }}</flux:text>
@@ -174,7 +218,7 @@ new #[Title('Import homes')] class extends Component {
         @endif
 
         <div>
-            <flux:button type="submit" variant="primary" icon="arrow-down-tray" :disabled="! $this->rentCast->isConfigured()">
+            <flux:button type="submit" variant="primary" icon="arrow-down-tray" :disabled="! $this->rentCast->isActive()">
                 <span wire:loading.remove wire:target="import">{{ __('Fetch homes') }}</span>
                 <span wire:loading wire:target="import">{{ __('Fetching from RentCast…') }}</span>
             </flux:button>
@@ -192,6 +236,8 @@ new #[Title('Import homes')] class extends Component {
         <flux:switch wire:model="auto_fetch" :label="__('Fetch live homes when a visitor searches a ZIP code')" :description="__('Uses at most one request per ZIP every :h hours, and stops at the monthly limit.', ['h' => config('services.rentcast.cache_hours')])" />
         <div><flux:button type="submit">{{ __('Save settings') }}</flux:button></div>
     </form>
+
+    @endif
 
     @if ($this->recent->isNotEmpty())
         <section class="grid gap-2">

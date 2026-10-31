@@ -58,6 +58,7 @@ test('a ZIP search fetches live homes once when the feed is on', function () {
         'zipCode' => '78704', 'propertyType' => 'Single Family', 'bedrooms' => 3, 'bathrooms' => 2, 'price' => 650000, 'status' => 'Active',
     ]]);
     config(['services.rentcast.key' => 'test-key']);
+    Setting::put(['live_feed_enabled' => '1']);
     Agent::factory()->create();
 
     Livewire::withoutLazyLoading()->test('zip-insights', ['zip' => '78704'])
@@ -73,6 +74,7 @@ test('a ZIP search fetches live homes once when the feed is on', function () {
 test('ZIP searches do not use the feed when the admin switched it off', function () {
     fakeZipAndSchools();
     config(['services.rentcast.key' => 'test-key']);
+    Setting::put(['live_feed_enabled' => '1']);
     Setting::put(['auto_fetch_zip' => '0']);
 
     Livewire::withoutLazyLoading()->test('zip-insights', ['zip' => '78704'])->assertSet('added', 0);

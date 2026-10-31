@@ -34,8 +34,8 @@
                         <flux:sidebar.item icon="users" :href="route('dashboard.agents.index')" :current="request()->routeIs('dashboard.agents.*')" wire:navigate>
                             {{ __('Agents') }}
                         </flux:sidebar.item>
-                        <flux:sidebar.item icon="arrow-down-tray" :href="route('dashboard.import')" :current="request()->routeIs('dashboard.import')" wire:navigate>
-                            {{ __('Import live homes') }}
+                        <flux:sidebar.item icon="arrow-down-tray" :href="route('dashboard.import')" :current="request()->routeIs('dashboard.import')" :badge="app(\App\Services\RentCast::class)->isEnabled() ? __('On') : __('Off')" wire:navigate>
+                            {{ __('Live homes') }}
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="map" :href="route('dashboard.cities.index')" :current="request()->routeIs('dashboard.cities.*')" wire:navigate>
                             {{ __('Cities') }}
