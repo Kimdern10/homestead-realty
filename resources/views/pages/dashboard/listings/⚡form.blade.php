@@ -3,7 +3,9 @@
 use App\Enums\ListingStatus;
 use App\Enums\PropertyType;
 use App\Models\Agent;
+use App\Models\Amenity;
 use App\Models\City;
+use App\Models\HomeType;
 use App\Models\Listing;
 use App\Models\ListingPhoto;
 use App\Support\ImageOptimizer;
@@ -108,7 +110,7 @@ new #[Title('Listing')] class extends Component {
         $this->fill([
             'title' => $listing->title,
             'status' => $listing->status->value,
-            'property_type' => $listing->property_type->value,
+            'property_type' => $listing->property_type,
             'price' => (string) $listing->price,
             'beds' => (string) $listing->beds,
             'baths' => $listing->baths !== null ? $listing->bathsLabel() : '',
@@ -166,6 +168,36 @@ new #[Title('Listing')] class extends Component {
         $photos = ListingPhoto::query()->whereIn('id', $this->photoIds)->get()->keyBy('id');
 
         return collect($this->photoIds)->map(fn (int $id) => $photos->get($id))->filter()->values();
+    }
+
+    /**
+     * The admin's home types, keyed by slug.
+     *
+     * @return array<string, string>
+     */
+    #[Computed]
+    public function homeTypes(): array
+    {
+        return HomeType::query()->ordered()->pluck('name', 'slug')->all();
+    }
+
+    /**
+     * The admin's amenities.
+     *
+     * @return list<string>
+     */
+    #[Computed]
+    public function amenityNames(): array
+    {
+        return array_values(Amenity::query()->orderBy('sort_order')->orderBy('name')->pluck('name')->all());
+    }
+
+    /**
+     * Whether the chosen home type is land (no bedrooms or bathrooms needed).
+     */
+    public function isLand(): bool
+    {
+        return HomeType::query()->where('slug', $this->property_type)->value('kind') === PropertyType::Land->value;
     }
 
     /**
@@ -244,12 +276,12 @@ new #[Title('Listing')] class extends Component {
      */
     protected function rules(): array
     {
-        $isLand = $this->property_type === PropertyType::Land->value;
+        $isLand = $this->isLand();
 
         return [
             'title' => ['required', 'string', 'max:150'],
             'status' => ['required', Rule::enum(ListingStatus::class)],
-            'property_type' => ['required', Rule::enum(PropertyType::class)],
+            'property_type' => ['required', Rule::exists('home_types', 'slug')],
             'price' => ['required', 'integer', 'min:1', 'max:999999999'],
             'beds' => [$isLand ? 'nullable' : 'required', 'nullable', 'integer', 'min:0', 'max:50'],
             'baths' => [$isLand ? 'nullable' : 'required', 'nullable', 'numeric', 'min:0', 'max:50', 'multiple_of:0.5'],
@@ -265,7 +297,7 @@ new #[Title('Listing')] class extends Component {
             'longitude' => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
             'description' => ['required', 'string', 'min:30', 'max:10000'],
             'amenities' => ['array'],
-            'amenities.*' => ['string', Rule::in(Listing::AMENITIES)],
+            'amenities.*' => ['string', Rule::exists('amenities', 'name')],
             'video_url' => ['nullable', 'url:http,https', 'max:255'],
             'virtual_tour_url' => ['nullable', 'url:http,https', 'max:255'],
             'hoa_fee' => ['nullable', 'integer', 'min:0', 'max:100000'],
@@ -323,7 +355,7 @@ new #[Title('Listing')] class extends Component {
                 ? $listing->slug
                 : Listing::uniqueSlug("{$validated['address']} {$city->name} {$city->state_code} {$validated['zip']}", $listing->id),
             'status' => $status,
-            'property_type' => PropertyType::from($validated['property_type']),
+            'property_type' => $validated['property_type'],
             'price' => (int) $validated['price'],
             'beds' => $nullable('beds'),
             'baths' => $nullable('baths'),
@@ -337,7 +369,7 @@ new #[Title('Listing')] class extends Component {
             'latitude' => $nullable('latitude'),
             'longitude' => $nullable('longitude'),
             'description' => trim($validated['description']),
-            'amenities' => array_values(array_intersect(Listing::AMENITIES, $validated['amenities'])),
+            'amenities' => array_values(array_intersect(Amenity::names(), $validated['amenities'])),
             'video_url' => $nullable('video_url'),
             'virtual_tour_url' => $nullable('virtual_tour_url'),
             'hoa_fee' => $nullable('hoa_fee'),
@@ -347,6 +379,11 @@ new #[Title('Listing')] class extends Component {
             'listed_at' => $validated['listed_at'],
             'sold_at' => $status === ListingStatus::Sold ? ($nullable('sold_at') ?? today()->toDateString()) : null,
         ]);
+
+        // The admin featuring a home is permanent; un-featuring also ends any paid feature.
+        if ($user->isAdmin() && $listing->isDirty('is_featured')) {
+            $listing->featured_until = null;
+        }
 
         // A feed home the office has changed is never overwritten by a later import.
         if ($listing->exists && $listing->isFromApi()) {
@@ -416,7 +453,7 @@ new #[Title('Listing')] class extends Component {
                         @endforeach
                     </flux:select>
                     <flux:select wire:model.live="property_type" :label="__('Home type *')">
-                        @foreach (\App\Enums\PropertyType::options() as $value => $label)
+                        @foreach ($this->homeTypes as $value => $label)
                             <flux:select.option :value="$value">{{ $label }}</flux:select.option>
                         @endforeach
                     </flux:select>
@@ -437,8 +474,8 @@ new #[Title('Listing')] class extends Component {
             <flux:legend>{{ __('Size and features') }}</flux:legend>
             <div class="grid gap-5">
                 <div class="grid grid-cols-2 gap-5 sm:grid-cols-4">
-                    <flux:input wire:model="beds" type="number" min="0" :label="__('Bedrooms').($property_type === 'land' ? '' : ' *')" :description="__('0 = studio')" />
-                    <flux:input wire:model="baths" type="number" min="0" step="0.5" :label="__('Bathrooms').($property_type === 'land' ? '' : ' *')" :description="__('e.g. 2.5')" />
+                    <flux:input wire:model="beds" type="number" min="0" :label="__('Bedrooms').($this->isLand() ? '' : ' *')" :description="__('0 = studio')" />
+                    <flux:input wire:model="baths" type="number" min="0" step="0.5" :label="__('Bathrooms').($this->isLand() ? '' : ' *')" :description="__('e.g. 2.5')" />
                     <flux:input wire:model="sqft" inputmode="numeric" :label="__('Square feet')" />
                     <flux:input wire:model="lot_acres" type="number" min="0" step="0.01" :label="__('Lot (acres)')" />
                     <flux:input wire:model="year_built" type="number" :label="__('Year built')" />
@@ -448,7 +485,7 @@ new #[Title('Listing')] class extends Component {
                 </div>
                 <flux:checkbox.group wire:model="amenities" :label="__('Amenities')">
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                        @foreach (\App\Models\Listing::AMENITIES as $amenity)
+                        @foreach ($this->amenityNames as $amenity)
                             <flux:checkbox :value="$amenity" :label="$amenity" wire:key="amenity-{{ $loop->index }}" />
                         @endforeach
                     </div>

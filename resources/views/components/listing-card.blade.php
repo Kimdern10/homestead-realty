@@ -8,7 +8,7 @@
             <span class="badge badge--{{ $listing->status->tone() }}">{{ $listing->status->label() }}</span>
             @if ($listing->isNew())
                 <span class="badge badge--new">New</span>
-            @elseif ($listing->is_featured && $listing->status->isAvailable())
+            @elseif ($listing->isFeaturedNow() && $listing->status->isAvailable())
                 <span class="badge badge--featured">Featured</span>
             @endif
         </div>

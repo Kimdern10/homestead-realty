@@ -64,7 +64,7 @@ test('homes from RentCast are saved as listings with a new city and the right ag
     $sale = Listing::query()->where('external_id', '3821-Hargis-St,-Austin,-TX-78723')->sole();
     expect($sale->source)->toBe('rentcast')
         ->and($sale->status)->toBe(ListingStatus::ForSale)
-        ->and($sale->property_type)->toBe(PropertyType::House)
+        ->and($sale->property_type)->toBe(PropertyType::House->value)
         ->and($sale->price)->toBe(899000)
         ->and($sale->agent_id)->toBe($zipAgent->id)
         ->and((float) $sale->lot_acres)->toBe(0.2)
@@ -75,7 +75,7 @@ test('homes from RentCast are saved as listings with a new city and the right ag
     $rent = Listing::query()->where('external_id', 'rent-1')->sole();
     expect($rent->status)->toBe(ListingStatus::ForRent)
         ->and($rent->address)->toBe('54 Rainey St Apt 513')
-        ->and($rent->property_type)->toBe(PropertyType::Condo);
+        ->and($rent->property_type)->toBe(PropertyType::Condo->value);
 
     Http::assertSent(fn ($request) => $request->hasHeader('X-Api-Key', 'test-key') && $request['zipCode'] === '78723' && $request['status'] === 'Active');
     expect(app(RentCast::class)->requestsThisMonth())->toBe(2);

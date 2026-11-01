@@ -26,7 +26,7 @@
             'businessFunction' => $isRental ? 'http://purl.org/goodrelations/v1#LeaseOut' : 'http://purl.org/goodrelations/v1#Sell',
         ],
         'mainEntity' => array_filter([
-            '@type' => $listing->property_type->schemaType(),
+            '@type' => $listing->kind()->schemaType(),
             'name' => $listing->address,
             'numberOfRooms' => $listing->beds,
             'numberOfBedrooms' => $listing->beds,
@@ -57,7 +57,7 @@
     ];
 
     $facts = array_filter([
-        'Property type' => $listing->property_type->label(),
+        'Property type' => $listing->typeLabel(),
         'Status' => $listing->status->label(),
         'Year built' => $listing->year_built,
         'Lot size' => $listing->lot_acres ? rtrim(rtrim($listing->lot_acres, '0'), '.').' acres' : null,
@@ -148,7 +148,7 @@
                                 @if ($listing->sqft)
                                     <span><x-icon name="ruler" /><b>{{ number_format($listing->sqft) }}</b> sqft</span>
                                 @endif
-                                @if ($listing->property_type === PropertyType::Land && $listing->lot_acres)
+                                @if ($listing->kind() === PropertyType::Land && $listing->lot_acres)
                                     <span><x-icon name="map" /><b>{{ rtrim(rtrim($listing->lot_acres, '0'), '.') }}</b> acres</span>
                                 @endif
                             </div>
@@ -160,7 +160,7 @@
                         </div>
                     </div>
                     <div class="listing-meta">
-                        <span class="chip"><x-icon name="home" /> {{ $listing->property_type->label() }}</span>
+                        <span class="chip"><x-icon name="home" /> {{ $listing->typeLabel() }}</span>
                         @if ($listing->year_built)<span class="chip"><x-icon name="building" /> Built {{ $listing->year_built }}</span>@endif
                         @if ($listing->status->isAvailable())<span class="chip"><x-icon name="clock" /> {{ $listing->daysOnSite() === 0 ? 'Listed today' : $listing->daysOnSite().' '.Str::plural('day', $listing->daysOnSite()).' on site' }}</span>@endif
                         @if ($listing->neighborhood)<a class="chip" href="{{ route('search', ['q' => $listing->neighborhood]) }}"><x-icon name="pin" /> {{ $listing->neighborhood }}</a>@endif
@@ -301,6 +301,20 @@
                             <p>{{ $listing->agent->title ?: Setting::get('business_name') }}</p>
                         </div>
                     </div>
+                    @if ($listing->status === ListingStatus::ForRent)
+                        @php($payments = app(\App\Services\Payments\PaymentManager::class))
+                        <div class="rent-actions">
+                            <a class="btn btn--primary btn--block" href="{{ route('listings.apply', $listing) }}" data-test="apply-button">
+                                <x-icon name="key" /> Apply to rent
+                                @if ($payments->offers(\App\Enums\PaymentPurpose::ApplicationFee))<span class="rent-actions__fee">{{ $payments->money($payments->price(\App\Enums\PaymentPurpose::ApplicationFee)) }} fee</span>@endif
+                            </a>
+                            @if ($payments->offers(\App\Enums\PaymentPurpose::HoldingDeposit))
+                                <a class="btn btn--outline btn--block" href="{{ route('listings.hold', $listing) }}" data-test="hold-button">
+                                    <x-icon name="shield" /> Hold it · {{ $payments->money($payments->price(\App\Enums\PaymentPurpose::HoldingDeposit)) }} deposit
+                                </a>
+                            @endif
+                        </div>
+                    @endif
                     @if ($listing->status->isAvailable() || $listing->status === ListingStatus::Pending)
                         <livewire:contact-agent :agent="$listing->agent" :listing="$listing" />
                     @else

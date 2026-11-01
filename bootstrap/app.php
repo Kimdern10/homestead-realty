@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Stripe and Paystack can't send a form token; their webhooks are checked by signature instead.
+        $middleware->validateCsrfTokens(except: ['webhooks/*']);
+
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
             'staff' => EnsureUserIsStaff::class,

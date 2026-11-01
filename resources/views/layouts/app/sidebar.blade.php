@@ -6,12 +6,20 @@
     <body class="min-h-screen bg-white dark:bg-zinc-800">
         <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
             <flux:sidebar.header>
-                <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
+                <x-app-logo :sidebar="true" href="{{ auth()->user()->isStaff() ? route('dashboard') : route('home') }}" />
                 <flux:sidebar.collapse class="lg:hidden" />
             </flux:sidebar.header>
 
             @php($user = auth()->user())
             <flux:sidebar.nav>
+                @unless ($user->isStaff())
+                    {{-- Visitors only see this layout on their account settings. --}}
+                    <flux:sidebar.group :heading="__('My account')" class="grid">
+                        <flux:sidebar.item icon="heart" :href="route('saved')">{{ __('Saved homes & searches') }}</flux:sidebar.item>
+                        <flux:sidebar.item icon="magnifying-glass" :href="route('search')">{{ __('Search homes') }}</flux:sidebar.item>
+                        <flux:sidebar.item icon="user" :href="route('profile.edit')" :current="request()->routeIs('profile.edit', 'security.edit', 'appearance.edit')" wire:navigate>{{ __('Account settings') }}</flux:sidebar.item>
+                    </flux:sidebar.group>
+                @else
                 <flux:sidebar.group :heading="__('Work')" class="grid">
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Overview') }}
@@ -21,6 +29,12 @@
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="inbox" :href="route('dashboard.enquiries.index')" :current="request()->routeIs('dashboard.enquiries.*')" :badge="\App\Models\Enquiry::query()->visibleTo($user)->where('status', \App\Enums\EnquiryStatus::New)->count() ?: null" wire:navigate>
                         {{ __('Enquiries & tours') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="document-text" :href="route('dashboard.applications.index')" :current="request()->routeIs('dashboard.applications.*')" :badge="\App\Models\RentalApplication::query()->visibleTo($user)->where('status', \App\Enums\ApplicationStatus::New)->count() ?: null" wire:navigate>
+                        {{ __('Rental applications') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="credit-card" :href="route('dashboard.payments')" :current="request()->routeIs('dashboard.payments')" wire:navigate>
+                        {{ __('Payments') }}
                     </flux:sidebar.item>
                     @if ($user->isAgent())
                         <flux:sidebar.item icon="user-circle" :href="route('dashboard.profile')" :current="request()->routeIs('dashboard.profile')" wire:navigate>
@@ -34,17 +48,36 @@
                         <flux:sidebar.item icon="users" :href="route('dashboard.agents.index')" :current="request()->routeIs('dashboard.agents.*')" wire:navigate>
                             {{ __('Agents') }}
                         </flux:sidebar.item>
-                        <flux:sidebar.item icon="arrow-down-tray" :href="route('dashboard.import')" :current="request()->routeIs('dashboard.import')" :badge="app(\App\Services\RentCast::class)->isEnabled() ? __('On') : __('Off')" wire:navigate>
-                            {{ __('Live homes') }}
-                        </flux:sidebar.item>
                         <flux:sidebar.item icon="map" :href="route('dashboard.cities.index')" :current="request()->routeIs('dashboard.cities.*')" wire:navigate>
                             {{ __('Cities') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="calendar-days" :href="route('dashboard.bookings')" :current="request()->routeIs('dashboard.bookings')" :badge="\App\Models\ServiceBooking::query()->where('status', \App\Enums\ApplicationStatus::New)->count() ?: null" wire:navigate>
+                            {{ __('Service bookings') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+
+                    <flux:sidebar.group :heading="__('Setup')" class="grid">
+                        <flux:sidebar.item icon="home-modern" :href="route('dashboard.home-types')" :current="request()->routeIs('dashboard.home-types')" wire:navigate>
+                            {{ __('Home types') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="sparkles" :href="route('dashboard.amenities')" :current="request()->routeIs('dashboard.amenities')" wire:navigate>
+                            {{ __('Amenities') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="briefcase" :href="route('dashboard.services')" :current="request()->routeIs('dashboard.services')" wire:navigate>
+                            {{ __('Services') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="banknotes" :href="route('dashboard.payment-setup')" :current="request()->routeIs('dashboard.payment-setup')" :badge="\App\Models\Setting::get('payment_gateway') === 'none' ? __('Off') : ucfirst(\App\Models\Setting::get('payment_gateway'))" wire:navigate>
+                            {{ __('Payments setup') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="arrow-down-tray" :href="route('dashboard.import')" :current="request()->routeIs('dashboard.import')" :badge="app(\App\Services\RentCast::class)->isEnabled() ? __('On') : __('Off')" wire:navigate>
+                            {{ __('Live homes') }}
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="cog-6-tooth" :href="route('dashboard.settings')" :current="request()->routeIs('dashboard.settings')" wire:navigate>
                             {{ __('Business details') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
                 @endif
+                @endunless
             </flux:sidebar.nav>
 
             <flux:spacer />

@@ -15,7 +15,7 @@ test('search filters by place, status, price, beds and home type', function () {
     Listing::factory()->for($austin)->create(['address' => '300 Too Pricey St', 'price' => 900000, 'beds' => 3]);
     Listing::factory()->for($austin)->create(['address' => '400 Too Small St', 'price' => 500000, 'beds' => 1]);
     Listing::factory()->for($austin)->forRent()->create(['address' => '500 Rental St']);
-    Listing::factory()->for($austin)->create(['address' => '600 Condo St', 'price' => 500000, 'beds' => 3, 'property_type' => PropertyType::Condo]);
+    Listing::factory()->for($austin)->create(['address' => '600 Condo St', 'price' => 500000, 'beds' => 3, 'property_type' => PropertyType::Condo->value]);
 
     Livewire::withQueryParams(['q' => 'Austin', 'status' => 'for_sale', 'max_price' => 600000, 'beds' => 2, 'types' => ['house']])
         ->test('pages::search')

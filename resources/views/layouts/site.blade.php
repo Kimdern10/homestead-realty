@@ -21,6 +21,10 @@
         'cities' => ['Cities', route('cities.index')],
         'agents' => ['Find an agent', route('agents.index')],
     ];
+
+    if (app(\App\Services\Payments\PaymentManager::class)->isEnabled() && \App\Models\Service::query()->where('is_active', true)->exists()) {
+        $links['services'] = ['Services', route('services')];
+    }
     $footerCities = \App\Models\City::query()->ordered()->take(6)->get(['name', 'slug']);
     $socials = array_filter(['Facebook' => $site['facebook_url'], 'Instagram' => $site['instagram_url'], 'X' => $site['x_url'], 'LinkedIn' => $site['linkedin_url'], 'YouTube' => $site['youtube_url']]);
 @endphp

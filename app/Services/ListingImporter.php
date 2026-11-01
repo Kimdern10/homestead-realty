@@ -114,7 +114,7 @@ class ListingImporter
             'city_id' => $city->id,
             'title' => $this->title($record, $type, $city, $status),
             'status' => $status,
-            'property_type' => $type,
+            'property_type' => $type->value,
             'price' => $price,
             'beds' => isset($record['bedrooms']) ? (int) $record['bedrooms'] : null,
             'baths' => isset($record['bathrooms']) ? round((float) $record['bathrooms'] * 2) / 2 : null,

@@ -753,3 +753,28 @@ body { font-size: 16px; line-height: 1.65; text-rendering: optimizeLegibility; }
 @media (prefers-reduced-motion: reduce) {
     .hero__img, .hero > .container > *, .page-enter, .tabbar, .map-pin, .school, .skeleton { animation: none !important; }
 }
+
+/* Payments: rental actions, deposit, services and the payment result page. */
+.rent-actions { display: grid; gap: 8px; margin-bottom: 16px; }
+.rent-actions .btn { justify-content: center; }
+.rent-actions__fee { font-weight: 600; opacity: .85; font-size: 13px; padding-left: 6px; border-left: 1px solid rgba(255, 255, 255, .45); margin-left: 4px; }
+.pay-note { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: var(--tint); color: var(--ink); font-size: 14px; }
+.pay-note .icon { color: var(--brand); flex: none; margin-top: 2px; }
+.form-section { font-family: var(--font); font-size: 15px; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
+.hold-amount { display: flex; align-items: baseline; justify-content: space-between; padding: 16px 18px; border-radius: 14px; background: var(--bg-soft); }
+.hold-amount b { font-size: 30px; font-weight: 800; color: var(--ink-strong); letter-spacing: -.02em; }
+.hold-points { list-style: none; padding: 0; margin: 4px 0; display: grid; gap: 10px; }
+.hold-points li { display: flex; gap: 10px; font-size: 15px; }
+.hold-points .icon { color: var(--ok); width: 18px; height: 18px; flex: none; margin-top: 3px; }
+.service-card { display: grid; gap: 10px; padding: 22px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); transition: transform .3s var(--ease), box-shadow .3s var(--ease); }
+.service-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.service-card h3 { font-size: 19px; }
+.service-card p { color: var(--muted); font-size: 15px; }
+.service-card__foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 8px; }
+.service-card__foot b { font-size: 22px; font-weight: 800; color: var(--ink-strong); }
+.pay-status { text-align: center; display: grid; justify-items: center; gap: 8px; padding: 36px 24px; }
+.pay-status h1 { font-size: clamp(28px, 4vw, 38px); }
+.pay-status__icon { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; animation: pop .5s var(--spring); }
+.pay-status__icon .icon { width: 30px; height: 30px; }
+.pay-status__icon--muted { background: var(--surface-2); color: var(--muted); }
+.pay-status__actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 18px; }

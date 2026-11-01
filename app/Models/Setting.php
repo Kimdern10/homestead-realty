@@ -44,6 +44,13 @@ class Setting extends Model
         'mortgage_rate' => '6.5',
         // Live homes from RentCast are off until the admin switches them on.
         'live_feed_enabled' => '0',
+        // Online payments: "none", "stripe" or "paystack". Amounts are in whole dollars; 0 hides that payment.
+        'payment_gateway' => 'none',
+        'payment_currency' => 'USD',
+        'application_fee' => '45',
+        'holding_deposit' => '500',
+        'featured_price' => '49',
+        'featured_days' => '30',
         'privacy_policy' => '',
     ];
 

@@ -25,7 +25,7 @@ use Illuminate\Support\Str;
  * @property string $title
  * @property string $slug
  * @property ListingStatus $status
- * @property PropertyType $property_type
+ * @property string $property_type
  * @property int $price
  * @property int|null $beds
  * @property string|null $baths
@@ -45,6 +45,7 @@ use Illuminate\Support\Str;
  * @property int|null $hoa_fee
  * @property int|null $property_tax
  * @property bool $is_featured
+ * @property Carbon|null $featured_until
  * @property bool $is_published
  * @property Carbon $listed_at
  * @property Carbon|null $sold_at
@@ -92,18 +93,6 @@ class Listing extends Model
     ];
 
     /**
-     * Amenities agents can tick on the listing form.
-     *
-     * @var list<string>
-     */
-    public const array AMENITIES = [
-        'Air conditioning', 'Central heating', 'Fireplace', 'Hardwood floors', 'Updated kitchen', 'Walk-in closet',
-        'In-unit laundry', 'Swimming pool', 'Hot tub', 'Patio or deck', 'Fenced yard', 'Garden',
-        'Garage', 'EV charger', 'Solar panels', 'Smart home', 'Gym', 'Doorman', 'Elevator', 'Rooftop terrace',
-        'Pet friendly', 'Waterfront', 'City view', 'Basement', 'Home office', 'Gated community',
-    ];
-
-    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -112,7 +101,6 @@ class Listing extends Model
     {
         return [
             'status' => ListingStatus::class,
-            'property_type' => PropertyType::class,
             'price' => 'integer',
             'beds' => 'integer',
             'sqft' => 'integer',
@@ -122,6 +110,7 @@ class Listing extends Model
             'hoa_fee' => 'integer',
             'property_tax' => 'integer',
             'is_featured' => 'boolean',
+            'featured_until' => 'datetime',
             'is_published' => 'boolean',
             'listed_at' => 'date',
             'sold_at' => 'date',
@@ -214,6 +203,18 @@ class Listing extends Model
     }
 
     /**
+     * Listings featured right now (a paid feature ends on its date).
+     *
+     * @param  Builder<Listing>  $query
+     */
+    #[Scope]
+    protected function featuredNow(Builder $query): void
+    {
+        $query->where('is_featured', true)
+            ->where(fn (Builder $when) => $when->whereNull('featured_until')->orWhere('featured_until', '>', now()));
+    }
+
+    /**
      * Apply the search filters a visitor chose.
      *
      * @param  Builder<Listing>  $query
@@ -247,10 +248,7 @@ class Listing extends Model
             $query->where('status', $status);
         }
 
-        $types = array_filter(array_map(
-            fn ($type) => PropertyType::tryFrom((string) $type),
-            (array) ($filters['types'] ?? []),
-        ));
+        $types = array_values(array_intersect((array) ($filters['types'] ?? []), array_keys(HomeType::options())));
 
         if ($types !== []) {
             $query->whereIn('property_type', $types);
@@ -351,7 +349,7 @@ class Listing extends Model
             $this->beds !== null ? ($this->beds === 0 ? 'Studio' : $this->beds.' bd') : null,
             $this->baths !== null ? $this->bathsLabel().' ba' : null,
             $this->sqft ? number_format($this->sqft).' sqft' : null,
-            $this->lot_acres && $this->property_type === PropertyType::Land ? rtrim(rtrim((string) $this->lot_acres, '0'), '.').' acre lot' : null,
+            $this->lot_acres && $this->kind() === PropertyType::Land ? rtrim(rtrim((string) $this->lot_acres, '0'), '.').' acre lot' : null,
         ]));
     }
 
@@ -412,6 +410,48 @@ class Listing extends Model
     }
 
     /**
+     * The admin's home type for this listing.
+     *
+     * @return BelongsTo<HomeType, $this>
+     */
+    public function homeType(): BelongsTo
+    {
+        return $this->belongsTo(HomeType::class, 'property_type', 'slug');
+    }
+
+    /**
+     * What kind of home it is (house, condo, land…), from its home type.
+     */
+    public function kind(): PropertyType
+    {
+        $type = HomeType::cachedBySlug()->get($this->property_type);
+
+        if ($type instanceof HomeType) {
+            return $type->kind;
+        }
+
+        return PropertyType::tryFrom($this->property_type) ?? PropertyType::House;
+    }
+
+    /**
+     * The home type's name, e.g. "Townhouse".
+     */
+    public function typeLabel(): string
+    {
+        $type = HomeType::cachedBySlug()->get($this->property_type);
+
+        return $type instanceof HomeType ? $type->name : $this->kind()->label();
+    }
+
+    /**
+     * Whether it is featured right now (paid features end on their date).
+     */
+    public function isFeaturedNow(): bool
+    {
+        return $this->is_featured && ($this->featured_until === null || $this->featured_until->isFuture());
+    }
+
+    /**
      * Whether the home came from the RentCast listings feed.
      */
     public function isFromApi(): bool
@@ -424,7 +464,7 @@ class Listing extends Model
      */
     public function placeholderUrl(): string
     {
-        $art = match ($this->property_type) {
+        $art = match ($this->kind()) {
             PropertyType::Condo, PropertyType::Apartment => 'condo',
             PropertyType::Townhouse, PropertyType::MultiFamily => 'townhouse',
             PropertyType::Land => 'land',

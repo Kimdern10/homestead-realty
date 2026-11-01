@@ -18,6 +18,10 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('dashboard')->group(fun
 
     Route::livewire('profile', 'pages::dashboard.agent-profile')->name('dashboard.profile');
 
+    Route::livewire('applications', 'pages::dashboard.applications.index')->name('dashboard.applications.index');
+    Route::livewire('applications/{application}', 'pages::dashboard.applications.show')->name('dashboard.applications.show');
+    Route::livewire('payments', 'pages::dashboard.payments')->name('dashboard.payments');
+
     Route::middleware('admin')->group(function () {
         Route::livewire('agents', 'pages::dashboard.agents.index')->name('dashboard.agents.index');
         Route::livewire('agents/create', 'pages::dashboard.agents.form')->name('dashboard.agents.create');
@@ -29,5 +33,10 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('dashboard')->group(fun
 
         Route::livewire('settings', 'pages::dashboard.settings')->name('dashboard.settings');
         Route::livewire('import', 'pages::dashboard.import')->name('dashboard.import');
+        Route::livewire('bookings', 'pages::dashboard.bookings')->name('dashboard.bookings');
+        Route::livewire('payment-setup', 'pages::dashboard.payment-setup')->name('dashboard.payment-setup');
+        Route::livewire('services', 'pages::dashboard.services')->name('dashboard.services');
+        Route::livewire('home-types', 'pages::dashboard.home-types')->name('dashboard.home-types');
+        Route::livewire('amenities', 'pages::dashboard.amenities')->name('dashboard.amenities');
     });
 });

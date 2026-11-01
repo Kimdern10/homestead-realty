@@ -46,4 +46,14 @@ return [
         'monthly_limit' => (int) env('RENTCAST_MONTHLY_LIMIT', 50),
     ],
 
+    // Online payments. Use test keys while testing (sk_test_… for Stripe and Paystack).
+    'stripe' => [
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
+    'paystack' => [
+        'secret' => env('PAYSTACK_SECRET'),
+    ],
+
 ];

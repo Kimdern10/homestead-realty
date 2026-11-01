@@ -15,8 +15,7 @@ class HomeController extends Controller
      */
     public function __invoke(): View
     {
-        $featured = Listing::query()->published()->forCards()
-            ->where('is_featured', true)
+        $featured = Listing::query()->published()->forCards()->featuredNow()
             ->whereIn('status', [ListingStatus::ForSale, ListingStatus::ForRent])
             ->latest('listed_at')->take(6)->get();
 

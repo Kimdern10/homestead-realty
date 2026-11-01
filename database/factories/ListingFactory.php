@@ -30,7 +30,7 @@ class ListingFactory extends Factory
             'title' => 'Lovely home on '.Str::after($address, ' '),
             'slug' => Str::slug($address).'-'.Str::lower(Str::random(5)),
             'status' => ListingStatus::ForSale,
-            'property_type' => PropertyType::House,
+            'property_type' => PropertyType::House->value,
             'price' => fake()->numberBetween(25, 150) * 10000,
             'beds' => fake()->numberBetween(1, 5),
             'baths' => fake()->randomElement([1, 1.5, 2, 2.5, 3]),
@@ -44,7 +44,7 @@ class ListingFactory extends Factory
             'latitude' => fake()->latitude(30.2, 30.4),
             'longitude' => fake()->longitude(-97.8, -97.6),
             'description' => fake()->paragraphs(3, true),
-            'amenities' => fake()->randomElements(Listing::AMENITIES, 5),
+            'amenities' => fake()->randomElements(['Air conditioning', 'Fireplace', 'Garage', 'Patio or deck', 'Hardwood floors'], 3),
             'hoa_fee' => null,
             'property_tax' => null,
             'is_featured' => false,
@@ -60,7 +60,7 @@ class ListingFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => ListingStatus::ForRent,
-            'property_type' => PropertyType::Apartment,
+            'property_type' => PropertyType::Apartment->value,
             'price' => fake()->numberBetween(12, 60) * 100,
         ]);
     }

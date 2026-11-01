@@ -22,9 +22,7 @@
     </x-slot:head>
 
     <section class="hero">
-        @if ($heroListing)
-            <img class="hero__img" src="{{ $heroListing->coverUrl(false) }}" alt="" fetchpriority="high" width="1600" height="1067">
-        @endif
+        <img class="hero__img" src="{{ $heroListing?->coverUrl(false) ?? asset('images/auth-home.webp') }}" alt="" fetchpriority="high" width="1600" height="1067">
         <div class="container">
             @php($heroWords = explode(' ', trim($site['hero_title'])))
             <h1>{{ implode(' ', array_slice($heroWords, 0, max(1, count($heroWords) - 2))) }} @if (count($heroWords) > 2)<em>{{ implode(' ', array_slice($heroWords, -2)) }}</em>@endif</h1>
@@ -54,14 +52,16 @@
         </div>
     </section>
 
-    <div class="container">
-        <div class="stats-band reveal">
-            <div><b data-count="{{ $stats['for_sale'] }}">{{ number_format($stats['for_sale']) }}</b><span>Homes for sale</span></div>
-            <div><b data-count="{{ $stats['for_rent'] }}">{{ number_format($stats['for_rent']) }}</b><span>Homes for rent</span></div>
-            <div><b data-count="{{ $stats['cities'] }}">{{ number_format($stats['cities']) }}</b><span>Cities covered</span></div>
-            <div><b data-count="{{ $stats['sold'] }}">{{ number_format($stats['sold']) }}</b><span>Homes sold by our agents</span></div>
+    @if ($stats['for_sale'] + $stats['for_rent'] > 0)
+        <div class="container">
+            <div class="stats-band reveal">
+                <div><b data-count="{{ $stats['for_sale'] }}">{{ number_format($stats['for_sale']) }}</b><span>Homes for sale</span></div>
+                <div><b data-count="{{ $stats['for_rent'] }}">{{ number_format($stats['for_rent']) }}</b><span>Homes for rent</span></div>
+                <div><b data-count="{{ $stats['cities'] }}">{{ number_format($stats['cities']) }}</b><span>Cities covered</span></div>
+                <div><b data-count="{{ $stats['sold'] }}">{{ number_format($stats['sold']) }}</b><span>Homes sold by our agents</span></div>
+            </div>
         </div>
-    </div>
+    @endif
 
     @if ($featured->isNotEmpty())
         <section class="section">

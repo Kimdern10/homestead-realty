@@ -1,7 +1,7 @@
 <?php
 
 use App\Enums\ListingStatus;
-use App\Enums\PropertyType;
+use App\Models\HomeType;
 use App\Models\City;
 use App\Models\Listing;
 use App\Models\SavedSearch;
@@ -242,8 +242,10 @@ new class extends Component {
             default => 'Homes',
         };
 
-        if (count($this->types) === 1 && ($type = PropertyType::tryFrom($this->types[0]))) {
-            $what = str_replace('Homes', $type->label().'s', $what);
+        $typeName = count($this->types) === 1 ? (HomeType::options()[$this->types[0]] ?? null) : null;
+
+        if ($typeName !== null) {
+            $what = str_replace('Homes', Str::plural($typeName), $what);
             $what = str_replace('Single-family homes', 'Houses', $what);
         }
 
@@ -285,7 +287,7 @@ new class extends Component {
     {
         $this->q = Str::limit(trim($this->q), 100, '');
         $this->status = ListingStatus::tryFrom($this->status)?->value ?? '';
-        $this->types = array_values(array_filter($this->types, fn ($type) => is_string($type) && PropertyType::tryFrom($type) !== null));
+        $this->types = array_values(array_filter($this->types, fn ($type) => is_string($type) && array_key_exists($type, HomeType::options())));
         $this->min_price = max(0, $this->min_price);
         $this->max_price = max(0, $this->max_price);
         $this->beds = min(6, max(0, $this->beds));
@@ -352,7 +354,7 @@ new class extends Component {
                             {{ $types ? count($types).' home '.Str::plural('type', count($types)) : 'Home type' }}
                         </button>
                         <div class="type-picker__panel" id="type-panel" x-show="types" x-cloak>
-                            @foreach (\App\Enums\PropertyType::options() as $value => $label)
+                            @foreach (\App\Models\HomeType::options() as $value => $label)
                                 <label class="check" wire:key="type-{{ $value }}"><input type="checkbox" value="{{ $value }}" wire:model.live="types"> {{ $label }}</label>
                             @endforeach
                         </div>

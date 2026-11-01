@@ -102,6 +102,32 @@ new #[Title('Listings')] class extends Component {
     }
 
     /**
+     * Pay to feature a listing on the home page (agents; the admin can feature for free in the listing form).
+     */
+    public function buyFeature(int $id, \App\Services\Payments\PaymentManager $payments): void
+    {
+        $listing = Listing::query()->findOrFail($id);
+        $this->authorize('update', $listing);
+        $user = auth()->user();
+
+        try {
+            $url = $payments->checkout(
+                \App\Enums\PaymentPurpose::FeaturedListing,
+                $payments->price(\App\Enums\PaymentPurpose::FeaturedListing),
+                'Featured listing: '.$listing->address.' ('.(int) \App\Models\Setting::get('featured_days').' days)',
+                ['name' => $user->name, 'email' => $user->email, 'user_id' => $user->id],
+                $listing,
+            );
+        } catch (RuntimeException $exception) {
+            Flux::toast($exception->getMessage(), variant: 'danger');
+
+            return;
+        }
+
+        $this->redirect($url);
+    }
+
+    /**
      * Delete a listing and its photos.
      */
     public function delete(int $id): void
@@ -166,7 +192,7 @@ new #[Title('Listings')] class extends Component {
                             <flux:badge size="sm" :color="match ($listing->status) { \App\Enums\ListingStatus::ForSale => 'red', \App\Enums\ListingStatus::ForRent => 'blue', \App\Enums\ListingStatus::Pending => 'amber', default => 'zinc' }">{{ $listing->status->label() }}</flux:badge>
                             @unless ($listing->is_published)<flux:badge size="sm" color="zinc" icon="eye-slash">{{ __('Draft') }}</flux:badge>@endunless
                             @if ($listing->isFromApi())<flux:badge size="sm" color="sky" icon="cloud-arrow-down">{{ __('Live feed') }}</flux:badge>@endif
-                            @if ($listing->is_featured)<flux:badge size="sm" color="amber" icon="star">{{ __('Featured') }}</flux:badge>@endif
+                            @if ($listing->isFeaturedNow())<flux:badge size="sm" color="amber" icon="star">{{ $listing->featured_until ? __('Featured until :date', ['date' => $listing->featured_until->format('M j')]) : __('Featured') }}</flux:badge>@endif
                         </div>
                         <div class="truncate text-sm">{{ $listing->fullAddress() }}</div>
                         <div class="text-xs text-zinc-500">
@@ -184,6 +210,12 @@ new #[Title('Listings')] class extends Component {
                                     <flux:menu.item icon="arrow-top-right-on-square" :href="route('listings.show', $listing)" target="_blank">{{ __('View on website') }}</flux:menu.item>
                                 @endif
                                 <flux:menu.item icon="{{ $listing->is_published ? 'eye-slash' : 'eye' }}" wire:click="togglePublished({{ $listing->id }})">{{ $listing->is_published ? __('Hide (make draft)') : __('Publish') }}</flux:menu.item>
+                                @php($payments = app(\App\Services\Payments\PaymentManager::class))
+                                @if (! auth()->user()->isAdmin() && $listing->is_published && $listing->status->isAvailable() && $payments->offers(\App\Enums\PaymentPurpose::FeaturedListing))
+                                    <flux:menu.item icon="star" wire:click="buyFeature({{ $listing->id }})">
+                                        {{ $listing->isFeaturedNow() ? __('Extend featured') : __('Feature it') }} · {{ $payments->money($payments->price(\App\Enums\PaymentPurpose::FeaturedListing)) }}
+                                    </flux:menu.item>
+                                @endif
                                 <flux:menu.separator />
                                 @foreach (\App\Enums\ListingStatus::cases() as $option)
                                     @if ($option !== $listing->status)

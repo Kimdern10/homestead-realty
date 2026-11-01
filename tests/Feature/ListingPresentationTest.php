@@ -18,7 +18,7 @@ test('prices are shown in full and in short form', function (int $price, bool $r
 test('facts read naturally for homes, studios and land', function () {
     expect(Listing::factory()->make(['beds' => 3, 'baths' => 2.5, 'sqft' => 1850])->facts())->toBe(['3 bd', '2.5 ba', '1,850 sqft'])
         ->and(Listing::factory()->make(['beds' => 0, 'baths' => 1.0, 'sqft' => null])->facts())->toBe(['Studio', '1 ba'])
-        ->and(Listing::factory()->make(['property_type' => PropertyType::Land, 'beds' => null, 'baths' => null, 'sqft' => null, 'lot_acres' => 2.5])->facts())->toBe(['2.5 acre lot']);
+        ->and(Listing::factory()->make(['property_type' => PropertyType::Land->value, 'beds' => null, 'baths' => null, 'sqft' => null, 'lot_acres' => 2.5])->facts())->toBe(['2.5 acre lot']);
 });
 
 test('each listing gets a unique web address', function () {

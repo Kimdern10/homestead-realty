@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Enums\ListingStatus;
-use App\Enums\PropertyType;
 use Database\Factories\SavedSearchFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -63,7 +62,7 @@ class SavedSearch extends Model
         return implode(' · ', array_filter([
             filled($filters['q'] ?? null) ? '“'.$filters['q'].'”' : null,
             ListingStatus::tryFrom((string) ($filters['status'] ?? ''))?->label(),
-            collect((array) ($filters['types'] ?? []))->map(fn ($type) => PropertyType::tryFrom((string) $type)?->label())->filter()->implode(', ') ?: null,
+            collect((array) ($filters['types'] ?? []))->map(fn ($type) => HomeType::options()[(string) $type] ?? null)->filter()->implode(', ') ?: null,
             (int) ($filters['beds'] ?? 0) > 0 ? $filters['beds'].'+ beds' : null,
             (float) ($filters['baths'] ?? 0) > 0 ? $filters['baths'].'+ baths' : null,
             (int) ($filters['min_price'] ?? 0) > 0 ? 'From $'.number_format((int) $filters['min_price']) : null,
