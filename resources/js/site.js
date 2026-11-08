@@ -44,12 +44,28 @@ document.addEventListener('click', (event) => {
 });
 
 // Light / dark switch, remembered on this device.
+// Light is the default; dark only when the visitor picked it. Page changes swap the <html> tag,
+// so the choice is put back after every change (and just before the new page shows, to avoid a flash).
+const savedTheme = () => {
+    try {
+        return localStorage.getItem('hr-theme') === 'dark' ? 'dark' : 'light';
+    } catch (error) {
+        return 'light';
+    }
+};
+const applyTheme = () => {
+    root.dataset.theme = savedTheme();
+};
+
+document.addEventListener('livewire:navigating', (event) => event.detail?.onSwap?.(applyTheme));
+document.addEventListener('livewire:navigated', applyTheme);
+
 document.addEventListener('click', (event) => {
     if (! event.target.closest('[data-theme-toggle]')) {
         return;
     }
 
-    const current = root.dataset.theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const current = root.dataset.theme === 'dark' ? 'dark' : 'light';
     const next = current === 'dark' ? 'light' : 'dark';
 
     root.classList.add('theme-switching');
