@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Models\Setting;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -35,13 +37,13 @@ class AppServiceProvider extends ServiceProvider
         Vite::useStyleTagAttributes(['data-navigate-track' => 'reload']);
 
         // The password reset email uses the site's own design and wording.
-        ResetPassword::toMailUsing(function (object $notifiable, string $token): MailMessage {
+        ResetPassword::toMailUsing(function (CanResetPassword $notifiable, string $token): MailMessage {
             $business = Setting::get('business_name');
 
             return (new MailMessage)
                 ->subject("Reset your {$business} password")
                 ->markdown('mail.reset-password', [
-                    'name' => $notifiable->name ?? null,
+                    'name' => $notifiable instanceof User ? $notifiable->name : null,
                     'url' => route('password.reset', ['token' => $token, 'email' => $notifiable->getEmailForPasswordReset()]),
                     'minutes' => (int) config('auth.passwords.'.config('auth.defaults.passwords').'.expire', 60),
                     'business' => $business,
