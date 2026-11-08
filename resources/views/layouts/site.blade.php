@@ -56,7 +56,7 @@
 
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
-        <script>document.documentElement.classList.add('js'); try { var t = localStorage.getItem('hr-theme'); if (t === 'light' || t === 'dark') { document.documentElement.dataset.theme = t; } } catch (e) {}</script>
+        <script>document.documentElement.classList.add('js'); document.documentElement.dataset.theme = 'light'; try { if (localStorage.getItem('hr-theme') === 'dark') { document.documentElement.dataset.theme = 'dark'; } } catch (e) {}</script>
 
         @fonts('manrope')
         @fonts('fraunces')
