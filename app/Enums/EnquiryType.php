@@ -6,6 +6,7 @@ enum EnquiryType: string
 {
     case Message = 'message';
     case Tour = 'tour';
+    case Valuation = 'valuation';
 
     /**
      * Get the name shown to people.
@@ -15,6 +16,7 @@ enum EnquiryType: string
         return match ($this) {
             self::Message => 'Message',
             self::Tour => 'Tour request',
+            self::Valuation => 'Home valuation',
         };
     }
 }

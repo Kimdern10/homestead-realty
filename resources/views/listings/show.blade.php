@@ -83,7 +83,7 @@
         <script type="application/ld+json">{!! json_encode($breadcrumbs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) !!}</script>
     </x-slot:head>
 
-    <div class="container">
+    <div class="container" data-recent="{{ $listing->id }}">
         <nav class="crumbs" aria-label="Breadcrumb" style="margin-top: 16px">
             <a href="{{ route('search', ['status' => $listing->status->value]) }}">{{ $listing->status->label() }}</a><span aria-hidden="true">/</span>
             <a href="{{ route('cities.show', $listing->city) }}">{{ $listing->city->label() }}</a>
@@ -134,6 +134,9 @@
                             <div class="listing-meta" style="margin: 0 0 10px">
                                 <span class="badge badge--{{ $listing->status->tone() }}">{{ $listing->status->label() }}</span>
                                 @if ($listing->isNew())<span class="badge badge--new">New</span>@endif
+                                @if ($listing->status->isAvailable() && ($cut = $listing->priceCut()))
+                                    <span class="badge badge--drop" data-test="price-drop">Price cut ${{ number_format($cut) }}</span>
+                                @endif
                             </div>
                             <div class="listing-price">
                                 ${{ number_format($listing->price) }}@if ($isRental)<small>/month</small>@endif
@@ -157,6 +160,8 @@
                         <div class="listing-actions">
                             <x-favorite-button :listing="$listing" :large="true" />
                             <button type="button" class="fav-btn fav-btn--lg" data-share><x-icon name="share" /><span>Share</span></button>
+                            <button type="button" class="fav-btn fav-btn--lg" data-compare="{{ $listing->id }}" aria-pressed="false"><x-icon name="compare" /><span>Compare</span></button>
+                            <a class="fav-btn fav-btn--lg" href="{{ route('listings.flyer', $listing) }}" target="_blank" rel="noopener" data-no-navigate><x-icon name="print" /><span>Flyer</span></a>
                         </div>
                     </div>
                     <div class="listing-meta">
@@ -166,6 +171,21 @@
                         @if ($listing->neighborhood)<a class="chip" href="{{ route('search', ['q' => $listing->neighborhood]) }}"><x-icon name="pin" /> {{ $listing->neighborhood }}</a>@endif
                     </div>
                 </section>
+
+                @if ($listing->openHouses->isNotEmpty())
+                    <section class="block" id="open-house">
+                        <h2>Open house</h2>
+                        <ul class="open-list">
+                            @foreach ($listing->openHouses as $openHouse)
+                                <li>
+                                    <span class="open-list__date"><b>{{ $openHouse->starts_at->format('j') }}</b>{{ $openHouse->starts_at->format('M') }}</span>
+                                    <span><strong>{{ $openHouse->label() }}</strong>@if ($openHouse->note)<small>{{ $openHouse->note }}</small>@endif</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                        <p class="muted" style="margin-top: 10px; font-size: 14px">No appointment needed. Just come by during these hours.</p>
+                    </section>
+                @endif
 
                 @if ($listing->video_url || $listing->virtual_tour_url)
                     <section class="block">
@@ -321,9 +341,15 @@
                         <p class="muted" style="margin-bottom: 12px">This home has sold. Ask {{ Str::before($listing->agent->name, ' ') }} about similar homes nearby.</p>
                         <livewire:contact-agent :agent="$listing->agent" :listing="$listing" :allow-tours="false" />
                     @endif
-                    @if ($phone = $listing->agent->phoneLink())
+                    @php($whatsapp = $listing->agent->whatsappLink('Hi '.Str::before($listing->agent->name, ' ').", I'm interested in ".$listing->address.': '.route('listings.show', $listing)))
+                    @if ($whatsapp || $listing->agent->phoneLink())
                         <div class="panel-links">
-                            <a class="btn btn--outline btn--block" href="{{ $phone }}"><x-icon name="phone" /> {{ $listing->agent->phone }}</a>
+                            @if ($whatsapp)
+                                <a class="btn btn--whatsapp btn--block" href="{{ $whatsapp }}" target="_blank" rel="noopener" data-test="whatsapp"><x-icon name="whatsapp" /> Chat on WhatsApp</a>
+                            @endif
+                            @if ($phone = $listing->agent->phoneLink())
+                                <a class="btn btn--outline btn--block" href="{{ $phone }}"><x-icon name="phone" /> Call {{ $listing->agent->phone }}</a>
+                            @endif
                         </div>
                     @endif
                 </div>

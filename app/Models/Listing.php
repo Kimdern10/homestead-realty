@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ListingStatus;
 use App\Enums\PropertyType;
+use Carbon\CarbonImmutable;
 use Database\Factories\ListingFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -27,6 +28,11 @@ use Illuminate\Support\Str;
  * @property ListingStatus $status
  * @property string $property_type
  * @property int $price
+ * @property int|null $previous_price
+ * @property CarbonImmutable|null $price_changed_at
+ * @property string|null $owner_name
+ * @property string|null $owner_email
+ * @property string|null $owner_phone
  * @property int|null $beds
  * @property string|null $baths
  * @property int|null $sqft
@@ -68,12 +74,29 @@ use Illuminate\Support\Str;
     'agent_id', 'city_id', 'title', 'slug', 'status', 'property_type', 'price', 'beds', 'baths', 'sqft', 'lot_acres',
     'year_built', 'garage_spaces', 'address', 'neighborhood', 'zip', 'latitude', 'longitude', 'description', 'amenities',
     'video_url', 'virtual_tour_url', 'hoa_fee', 'property_tax', 'is_featured', 'is_published', 'listed_at', 'sold_at',
-    'source', 'external_id', 'mls_name', 'mls_number', 'listing_office',
+    'source', 'external_id', 'mls_name', 'mls_number', 'listing_office', 'owner_name', 'owner_email', 'owner_phone',
 ])]
 class Listing extends Model
 {
     /** @use HasFactory<ListingFactory> */
     use HasFactory;
+
+    /**
+     * Remember the old price when a price goes down, so cards can show the cut.
+     */
+    protected static function booted(): void
+    {
+        static::updating(function (Listing $listing): void {
+            if (! $listing->isDirty('price')) {
+                return;
+            }
+
+            $old = (int) $listing->getOriginal('price');
+
+            $listing->previous_price = $listing->price < $old ? max($old, (int) $listing->previous_price) : null;
+            $listing->price_changed_at = now();
+        });
+    }
 
     public const int MAX_PHOTOS = 30;
 
@@ -115,6 +138,8 @@ class Listing extends Model
             'listed_at' => 'date',
             'sold_at' => 'date',
             'views' => 'integer',
+            'previous_price' => 'integer',
+            'price_changed_at' => 'datetime',
             'synced_at' => 'datetime',
             'edited_by_admin' => 'boolean',
         ];
@@ -163,6 +188,46 @@ class Listing extends Model
     }
 
     /**
+     * Open houses, soonest first.
+     *
+     * @return HasMany<OpenHouse, $this>
+     */
+    public function openHouses(): HasMany
+    {
+        return $this->hasMany(OpenHouse::class)->orderBy('starts_at');
+    }
+
+    /**
+     * The next open house that hasn't finished.
+     *
+     * @return HasOne<OpenHouse, $this>
+     */
+    public function nextOpenHouse(): HasOne
+    {
+        return $this->hasOne(OpenHouse::class)->ofMany(['starts_at' => 'min'], fn (Builder $query) => $query->where('ends_at', '>', now()));
+    }
+
+    /**
+     * How much the price was cut, when it went down in the last 60 days.
+     */
+    public function priceCut(): ?int
+    {
+        if ($this->previous_price === null || $this->previous_price <= $this->price || $this->price_changed_at?->lt(now()->subDays(60))) {
+            return null;
+        }
+
+        return $this->previous_price - $this->price;
+    }
+
+    /**
+     * Whether it was submitted by a private owner (for sale by owner).
+     */
+    public function isOwnerSubmission(): bool
+    {
+        return $this->source === 'owner';
+    }
+
+    /**
      * @return HasMany<Enquiry, $this>
      */
     public function enquiries(): HasMany
@@ -199,7 +264,7 @@ class Listing extends Model
     #[Scope]
     protected function forCards(Builder $query): void
     {
-        $query->with(['city', 'coverPhoto']);
+        $query->with(['city', 'coverPhoto', 'nextOpenHouse']);
     }
 
     /**
@@ -277,6 +342,74 @@ class Listing extends Model
         if ((float) ($filters['baths'] ?? 0) > 0) {
             $query->where('baths', '>=', (float) $filters['baths']);
         }
+
+        $area = self::parseArea((string) ($filters['area'] ?? ''));
+
+        if ($area !== []) {
+            $lats = array_column($area, 0);
+            $lngs = array_column($area, 1);
+
+            // Narrow to the box around the shape in SQL, then keep only homes inside the shape.
+            $inside = self::query()
+                ->whereBetween('latitude', [min($lats), max($lats)])
+                ->whereBetween('longitude', [min($lngs), max($lngs)])
+                ->get(['id', 'latitude', 'longitude'])
+                ->filter(fn (Listing $listing) => self::pointInArea((float) $listing->latitude, (float) $listing->longitude, $area))
+                ->modelKeys();
+
+            $query->whereKey($inside);
+        }
+    }
+
+    /**
+     * Read a drawn area ("30.27,-97.74;30.29,-97.70;…") into a list of [lat, lng] corners.
+     * Anything malformed gives an empty list, which means "no area".
+     *
+     * @return list<array{0: float, 1: float}>
+     */
+    public static function parseArea(string $area): array
+    {
+        $corners = [];
+
+        foreach (array_slice(explode(';', $area), 0, 60) as $pair) {
+            $parts = explode(',', $pair);
+
+            if (count($parts) !== 2 || ! is_numeric($parts[0]) || ! is_numeric($parts[1])) {
+                return [];
+            }
+
+            [$lat, $lng] = [(float) $parts[0], (float) $parts[1]];
+
+            if (abs($lat) > 90 || abs($lng) > 180) {
+                return [];
+            }
+
+            $corners[] = [$lat, $lng];
+        }
+
+        return count($corners) >= 3 ? $corners : [];
+    }
+
+    /**
+     * Whether a point lies inside the drawn shape (ray casting).
+     *
+     * @param  list<array{0: float, 1: float}>  $area
+     */
+    public static function pointInArea(float $lat, float $lng, array $area): bool
+    {
+        $inside = false;
+        $count = count($area);
+
+        for ($i = 0, $j = $count - 1; $i < $count; $j = $i++) {
+            [$latI, $lngI] = $area[$i];
+            [$latJ, $lngJ] = $area[$j];
+
+            if (($lngI > $lng) !== ($lngJ > $lng) && $lat < ($latJ - $latI) * ($lng - $lngI) / ($lngJ - $lngI) + $latI) {
+                $inside = ! $inside;
+            }
+        }
+
+        return $inside;
     }
 
     /**
@@ -456,7 +589,7 @@ class Listing extends Model
      */
     public function isFromApi(): bool
     {
-        return $this->source !== 'manual';
+        return ! in_array($this->source, ['manual', 'owner'], true);
     }
 
     /**

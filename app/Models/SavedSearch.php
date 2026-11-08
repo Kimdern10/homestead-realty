@@ -15,10 +15,13 @@ use Illuminate\Support\Carbon;
  * @property int $user_id
  * @property string $name
  * @property array<string, mixed> $filters
+ * @property bool $alerts_enabled
+ * @property Carbon|null $last_alerted_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read User $user
  */
-#[Fillable(['user_id', 'name', 'filters'])]
+#[Fillable(['user_id', 'name', 'filters', 'alerts_enabled', 'last_alerted_at'])]
 class SavedSearch extends Model
 {
     /** @use HasFactory<SavedSearchFactory> */
@@ -33,6 +36,8 @@ class SavedSearch extends Model
     {
         return [
             'filters' => 'array',
+            'alerts_enabled' => 'boolean',
+            'last_alerted_at' => 'datetime',
         ];
     }
 
@@ -67,6 +72,7 @@ class SavedSearch extends Model
             (float) ($filters['baths'] ?? 0) > 0 ? $filters['baths'].'+ baths' : null,
             (int) ($filters['min_price'] ?? 0) > 0 ? 'From $'.number_format((int) $filters['min_price']) : null,
             (int) ($filters['max_price'] ?? 0) > 0 ? 'Up to $'.number_format((int) $filters['max_price']) : null,
+            filled($filters['area'] ?? null) ? 'Drawn map area' : null,
         ])) ?: 'All homes';
     }
 }

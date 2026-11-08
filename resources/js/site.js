@@ -440,6 +440,143 @@ function setUpCalculators() {
     });
 }
 
+/*
+ * ---------------------------------------------------------------------------
+ * Affordability and rent-vs-buy calculators
+ * ---------------------------------------------------------------------------
+ */
+const asMoney = (value) => (value < 0 ? '-$' : '$') + Math.abs(Math.round(value)).toLocaleString('en-US');
+const asNumber = (input) => Number(String(input?.value ?? '').replace(/[^0-9.]/g, '')) || 0;
+const paymentFactor = (yearlyRatePercent, years) => {
+    const rate = yearlyRatePercent / 100 / 12;
+    const months = years * 12;
+
+    if (months === 0) {
+        return 0;
+    }
+
+    return rate === 0 ? 1 / months : rate / (1 - Math.pow(1 + rate, -months));
+};
+
+function setUpAffordability() {
+    document.querySelectorAll('[data-afford]:not([data-ready])').forEach((form) => {
+        form.dataset.ready = '1';
+        const field = (name) => form.querySelector(`[name="${name}"]`);
+        const output = (name) => document.querySelector(`[data-out="${name}"]`);
+
+        const update = () => {
+            const monthlyIncome = asNumber(field('income')) / 12;
+            const debts = asNumber(field('debts'));
+            const down = asNumber(field('down'));
+            const taxRate = asNumber(field('tax')) / 100 / 12;
+            const fixed = asNumber(field('insurance')) / 12 + asNumber(field('hoa'));
+            const factor = paymentFactor(asNumber(field('rate')), asNumber(field('term')));
+            const budget = Math.max(0, Math.min(monthlyIncome * 0.28, monthlyIncome * 0.36 - debts));
+            const loan = Math.max(0, (budget - fixed - down * taxRate) / (factor + taxRate));
+            const price = loan + down;
+            const monthly = loan * factor + price * taxRate + fixed;
+
+            output('price').textContent = asMoney(Math.floor(price / 1000) * 1000);
+            output('monthly').textContent = asMoney(monthly) + '/mo';
+            output('loan').textContent = asMoney(loan);
+            output('share').textContent = monthlyIncome > 0 ? Math.round(monthly / monthlyIncome * 100) + '%' : '0%';
+            output('note').textContent = monthlyIncome * 0.36 - debts < monthlyIncome * 0.28
+                ? 'Your monthly debts are lowering this number. Paying some off would raise it.'
+                : 'Lowering the rate or adding to your down payment raises this number.';
+
+            const link = document.querySelector('[data-afford-search]');
+
+            if (link) {
+                const url = new URL(link.href, window.location.href);
+                url.searchParams.set('max_price', String(Math.floor(price / 10000) * 10000));
+                link.href = url.toString();
+            }
+        };
+
+        form.addEventListener('input', update);
+        update();
+    });
+}
+
+function setUpRentVsBuy() {
+    document.querySelectorAll('[data-rentbuy]:not([data-ready])').forEach((form) => {
+        form.dataset.ready = '1';
+        const field = (name) => form.querySelector(`[name="${name}"]`);
+        const output = (name) => document.querySelector(`[data-out="${name}"]`);
+
+        // Net cost of each choice after a number of years.
+        const costs = (years) => {
+            const price = asNumber(field('price'));
+            const down = price * asNumber(field('down')) / 100;
+            const loan = price - down;
+            const monthlyRate = asNumber(field('rate')) / 100 / 12;
+            const payment = loan * paymentFactor(asNumber(field('rate')), 30);
+            const growth = asNumber(field('growth')) / 100;
+            const invest = asNumber(field('invest')) / 100;
+            const buyCosts = price * asNumber(field('buy_costs')) / 100;
+
+            let balance = loan;
+            let paid = down + buyCosts;
+            let rent = asNumber(field('rent'));
+            let rentPaid = 0;
+
+            for (let year = 0; year < years; year++) {
+                const value = price * Math.pow(1 + growth, year);
+                paid += (asNumber(field('tax')) / 100 + asNumber(field('upkeep')) / 100) * value + asNumber(field('insurance'));
+
+                for (let month = 0; month < 12; month++) {
+                    const interest = balance * monthlyRate;
+                    balance = Math.max(0, balance - (payment - interest));
+                    paid += payment;
+                }
+
+                rentPaid += rent * 12;
+                rent *= 1 + asNumber(field('rent_growth')) / 100;
+            }
+
+            const saleValue = price * Math.pow(1 + growth, years);
+            const buy = paid - (saleValue * (1 - asNumber(field('sell_costs')) / 100) - balance);
+            const rentCost = rentPaid - (down + buyCosts) * (Math.pow(1 + invest, years) - 1);
+
+            return { buy, rent: rentCost };
+        };
+
+        const update = () => {
+            const years = asNumber(field('years')) || 1;
+            const result = costs(years);
+            const difference = Math.abs(result.buy - result.rent);
+            let breakEven = null;
+
+            for (let year = 1; year <= 30; year++) {
+                const check = costs(year);
+
+                if (check.buy < check.rent) {
+                    breakEven = year;
+                    break;
+                }
+            }
+
+            output('years').textContent = `${years} ${years === 1 ? 'year' : 'years'}`;
+            output('verdict-lead').textContent = `Over ${years} ${years === 1 ? 'year' : 'years'}`;
+            output('verdict').textContent = result.buy < result.rent ? `Buying saves ${asMoney(difference)}` : `Renting saves ${asMoney(difference)}`;
+            output('buy').textContent = asMoney(result.buy);
+            output('rentcost').textContent = asMoney(result.rent);
+            output('breakeven').textContent = breakEven ? `${breakEven} ${breakEven === 1 ? 'year' : 'years'}` : 'more than 30 years';
+
+            const bars = document.querySelector('[data-bars]');
+
+            if (bars) {
+                const top = Math.max(Math.abs(result.buy), Math.abs(result.rent), 1);
+                bars.innerHTML = `<span style="width:${Math.max(4, Math.abs(result.buy) / top * 100)}%;background:var(--brand)"></span>`
+                    + `<span style="width:${Math.max(4, Math.abs(result.rent) / top * 100)}%;background:var(--rent)"></span>`;
+            }
+        };
+
+        form.addEventListener('input', update);
+        update();
+    });
+}
+
 // Maps (Leaflet + OpenStreetMap).
 let leafletPromise = null;
 
@@ -520,6 +657,11 @@ function initMap(element) {
         draw(JSON.parse(element.dataset.points || '[]'));
         element.redraw = () => draw(JSON.parse(element.dataset.points || '[]'));
 
+        if (element.hasAttribute('data-draw')) {
+            setUpDrawing(L, map, element);
+        }
+
+
         // Highlight the marker of the card under the pointer.
         element.closest('main')?.addEventListener('mouseover', (event) => {
             const card = event.target.closest('[data-listing]');
@@ -531,6 +673,90 @@ function initMap(element) {
     }).catch(() => {
         element.querySelector('.map-note')?.replaceChildren('The map could not be loaded. Check your connection and refresh the page.');
     });
+}
+
+// "Draw an area": tap points on the map to outline where you want to live.
+function setUpDrawing(L, map, element) {
+    const tools = document.createElement('div');
+    tools.className = 'draw-tools';
+    element.append(tools);
+    L.DomEvent.disableClickPropagation(tools);
+
+    let shape = null;
+    let points = [];
+    let preview = null;
+    let drawing = false;
+
+    const showShape = (corners) => {
+        shape?.remove();
+        shape = corners.length >= 3 ? L.polygon(corners, { color: '#d92228', weight: 2, fillOpacity: 0.08 }).addTo(map) : null;
+    };
+
+    const render = () => {
+        if (drawing) {
+            tools.innerHTML = `<span class="draw-tools__hint">Tap the map to add corners${points.length ? ` (${points.length})` : ''}</span>`
+                + `<button type="button" class="btn btn--primary btn--sm" data-draw-finish ${points.length < 3 ? 'disabled' : ''}>Search this area</button>`
+                + '<button type="button" class="btn btn--outline btn--sm" data-draw-cancel>Cancel</button>';
+        } else {
+            tools.innerHTML = `<button type="button" class="btn btn--dark btn--sm" data-draw-start><span aria-hidden="true">✎</span> ${shape ? 'Redraw area' : 'Draw an area'}</button>`;
+        }
+    };
+
+    const stop = () => {
+        drawing = false;
+        preview?.remove();
+        preview = null;
+        points = [];
+        element.classList.remove('is-drawing');
+        map.doubleClickZoom.enable();
+        render();
+    };
+
+    map.on('click', (event) => {
+        if (! drawing) {
+            return;
+        }
+
+        points.push([Math.round(event.latlng.lat * 1e5) / 1e5, Math.round(event.latlng.lng * 1e5) / 1e5]);
+        preview?.remove();
+        preview = (points.length >= 3 ? L.polygon(points, { color: '#d92228', weight: 2, dashArray: '6 6', fillOpacity: 0.05 }) : L.polyline(points, { color: '#d92228', weight: 2, dashArray: '6 6' })).addTo(map);
+        render();
+    });
+
+    tools.addEventListener('click', (event) => {
+        // The buttons are redrawn below, so stop the click here before the map sees it as a new corner.
+        event.stopPropagation();
+
+        if (event.target.closest('[data-draw-start]')) {
+            drawing = true;
+            points = [];
+            element.classList.add('is-drawing');
+            map.doubleClickZoom.disable();
+            render();
+        } else if (event.target.closest('[data-draw-cancel]')) {
+            stop();
+        } else if (event.target.closest('[data-draw-finish]') && points.length >= 3) {
+            const corners = points;
+            showShape(corners);
+            stop();
+            window.Livewire?.dispatch('area-drawn', { points: corners });
+        }
+    });
+
+    const existing = String(element.dataset.area || '').split(';').map((pair) => pair.split(',').map(Number)).filter((pair) => pair.length === 2 && pair.every(Number.isFinite));
+
+    if (existing.length >= 3) {
+        showShape(existing);
+        map.fitBounds(shape.getBounds(), { padding: [30, 30] });
+    }
+
+    window.addEventListener('area-cleared', () => {
+        shape?.remove();
+        shape = null;
+        render();
+    });
+
+    render();
 }
 
 const mapObserver = 'IntersectionObserver' in window
@@ -573,14 +799,178 @@ function setUpParallax() {
     document.addEventListener('livewire:navigating', () => window.removeEventListener('scroll', move), { once: true });
 }
 
+/*
+ * ---------------------------------------------------------------------------
+ * Compare homes and "Recently viewed" (kept in this browser only)
+ * ---------------------------------------------------------------------------
+ */
+const COMPARE_KEY = 'hr-compare';
+const COMPARE_LIMIT = 4;
+const RECENT_KEY = 'hr-recent';
+const RECENT_LIMIT = 12;
+
+function readList(key) {
+    try {
+        const value = JSON.parse(localStorage.getItem(key) || '[]');
+
+        return Array.isArray(value) ? value.map(Number).filter((id) => id > 0) : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function writeList(key, list) {
+    try {
+        localStorage.setItem(key, JSON.stringify(list));
+    } catch (error) {
+        // Private mode or storage full: the feature simply won't remember.
+    }
+}
+
+function syncCompare() {
+    const list = readList(COMPARE_KEY);
+
+    document.querySelectorAll('[data-compare]').forEach((button) => {
+        const on = list.includes(Number(button.dataset.compare));
+        button.setAttribute('aria-pressed', String(on));
+        button.setAttribute('aria-label', on ? 'Remove from compare' : 'Add to compare');
+    });
+
+    // The plain /compare link (footer, home page) shows the homes picked in this browser.
+    if (window.location.pathname === '/compare' && ! new URLSearchParams(window.location.search).has('ids') && list.length > 0) {
+        window.location.replace(`/compare?ids=${list.join(',')}`);
+
+        return;
+    }
+
+    let bar = document.querySelector('.compare-bar');
+
+    if (list.length === 0 || window.location.pathname === '/compare') {
+        bar?.remove();
+
+        return;
+    }
+
+    if (! bar) {
+        bar = document.createElement('div');
+        bar.className = 'compare-bar';
+        bar.setAttribute('role', 'region');
+        bar.setAttribute('aria-label', 'Homes to compare');
+        document.body.append(bar);
+    }
+
+    bar.innerHTML = `<span><b>${list.length}</b> of ${COMPARE_LIMIT} homes picked</span>`
+        + `<button type="button" class="link" data-compare-clear>Clear</button>`
+        + `<a class="btn btn--primary btn--sm" href="/compare?ids=${list.join(',')}">${list.length > 1 ? 'Compare now' : 'Pick one more'}</a>`;
+}
+
+document.addEventListener('click', (event) => {
+    const toggle = event.target.closest('[data-compare]');
+    const remove = event.target.closest('[data-compare-remove]');
+    const clear = event.target.closest('[data-compare-clear]');
+
+    if (! toggle && ! remove && ! clear) {
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    let list = readList(COMPARE_KEY);
+
+    if (clear) {
+        list = [];
+    } else if (remove) {
+        list = list.filter((id) => id !== Number(remove.dataset.compareRemove));
+        writeList(COMPARE_KEY, list);
+        window.Livewire?.navigate ? window.Livewire.navigate(`/compare?ids=${list.join(',')}`) : (window.location.href = `/compare?ids=${list.join(',')}`);
+
+        return;
+    } else {
+        const id = Number(toggle.dataset.compare);
+
+        if (list.includes(id)) {
+            list = list.filter((item) => item !== id);
+            toast('Removed from compare');
+        } else if (list.length >= COMPARE_LIMIT) {
+            toast(`You can compare up to ${COMPARE_LIMIT} homes`);
+
+            return;
+        } else {
+            list.push(id);
+            toast(list.length > 1 ? 'Added. Tap "Compare now" below' : 'Added. Pick another home to compare');
+        }
+    }
+
+    writeList(COMPARE_KEY, list);
+    syncCompare();
+});
+
+// Remember the home being viewed, newest first.
+function trackRecent() {
+    const holder = document.querySelector('[data-recent]');
+
+    if (! holder) {
+        return;
+    }
+
+    const id = Number(holder.dataset.recent);
+    writeList(RECENT_KEY, [id, ...readList(RECENT_KEY).filter((item) => item !== id)].slice(0, RECENT_LIMIT));
+}
+
+// Fill a "Recently viewed" row with real cards from the server.
+async function loadRecent() {
+    const box = document.querySelector('[data-recent-list]');
+
+    if (! box) {
+        return;
+    }
+
+    const skip = Number(box.dataset.skip || 0);
+    const ids = readList(RECENT_KEY).filter((id) => id !== skip).slice(0, 8);
+
+    if (ids.length === 0) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/homes/cards?ids=${ids.join(',')}`, { headers: { Accept: 'text/html' }, credentials: 'same-origin' });
+        const html = (await response.text()).trim();
+
+        if (! response.ok || html === '') {
+            return;
+        }
+
+        box.querySelector('[data-recent-cards]').innerHTML = html;
+        box.hidden = false;
+        syncCompare();
+    } catch (error) {
+        // Leave the section hidden.
+    }
+}
+
+document.addEventListener('click', (event) => {
+    if (! event.target.closest('[data-recent-clear]')) {
+        return;
+    }
+
+    writeList(RECENT_KEY, []);
+    document.querySelector('[data-recent-list]')?.setAttribute('hidden', '');
+});
+
 function setUpPage() {
     setMenu(false);
     setUpReveals();
     setUpCounters();
     setUpLightbox();
     setUpCalculators();
+    setUpAffordability();
+    setUpRentVsBuy();
     setUpMaps();
     setUpParallax();
+    trackRecent();
+    loadRecent();
+    syncCompare();
 }
 
 // "livewire:navigated" runs after the first load and after every page change.
@@ -608,6 +998,7 @@ const hookLivewire = () => {
         setUpReveals();
         setUpCounters();
         setUpMaps();
+        syncCompare();
     });
 };
 

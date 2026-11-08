@@ -1,7 +1,11 @@
 <x-mail::message>
-# {{ $enquiry->type === \App\Enums\EnquiryType::Tour ? 'New tour request' : 'New message' }}
+# {{ match ($enquiry->type) { \App\Enums\EnquiryType::Tour => 'New tour request', \App\Enums\EnquiryType::Valuation => 'New home valuation request', default => 'New message' } }}
 
+@if ($enquiry->type === \App\Enums\EnquiryType::Valuation)
+**{{ $enquiry->name }}** wants to know what their home is worth. This is a possible seller.
+@else
 **{{ $enquiry->name }}** {{ $enquiry->type === \App\Enums\EnquiryType::Tour ? 'would like to tour' : 'sent a message about' }} {{ $enquiry->listing ? $enquiry->listing->fullAddress() : 'your listings' }}.
+@endif
 
 <x-mail::table>
 | | |

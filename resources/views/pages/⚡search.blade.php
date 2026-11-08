@@ -57,6 +57,12 @@ new class extends Component {
     #[Url(except: 0)]
     public float $baths = 0;
 
+    /**
+     * A shape drawn on the map: "lat,lng;lat,lng;…".
+     */
+    #[Url(except: '')]
+    public string $area = '';
+
     #[Url(except: 'newest')]
     public string $sort = 'newest';
 
@@ -80,7 +86,7 @@ new class extends Component {
     {
         $this->sanitize();
 
-        if (in_array(explode('.', $property)[0], ['q', 'status', 'types', 'min_price', 'max_price', 'beds', 'baths'], true)) {
+        if (in_array(explode('.', $property)[0], ['q', 'status', 'types', 'min_price', 'max_price', 'beds', 'baths', 'area'], true)) {
             $this->resetPage();
             $this->searchSaved = false;
             $this->dispatch('map-points', points: $this->mapPoints());
@@ -107,6 +113,36 @@ new class extends Component {
     public function setView(string $view): void
     {
         $this->view = $view === 'map' ? 'map' : 'list';
+    }
+
+    /**
+     * Search only inside the shape the visitor drew on the map.
+     *
+     * @param  list<array{0: float|int|string, 1: float|int|string}>  $points
+     */
+    #[\Livewire\Attributes\On('area-drawn')]
+    public function setArea(array $points): void
+    {
+        $area = collect($points)->take(60)
+            ->map(fn ($point) => is_array($point) && count($point) === 2 ? round((float) $point[0], 5).','.round((float) $point[1], 5) : null)
+            ->filter()->implode(';');
+
+        $this->area = Listing::parseArea($area) === [] ? '' : $area;
+        $this->view = 'map';
+        $this->resetPage();
+        $this->searchSaved = false;
+        $this->dispatch('map-points', points: $this->mapPoints(), keepView: true);
+    }
+
+    /**
+     * Remove the drawn shape.
+     */
+    public function clearArea(): void
+    {
+        $this->area = '';
+        $this->resetPage();
+        $this->dispatch('map-points', points: $this->mapPoints());
+        $this->dispatch('area-cleared');
     }
 
     /**
@@ -167,6 +203,7 @@ new class extends Component {
             'max_price' => $this->max_price,
             'beds' => $this->beds,
             'baths' => $this->baths,
+            'area' => $this->area,
         ], fn ($value) => filled($value) && $value !== 0 && $value !== 0.0);
     }
 
@@ -247,6 +284,10 @@ new class extends Component {
         if ($typeName !== null) {
             $what = str_replace('Homes', Str::plural($typeName), $what);
             $what = str_replace('Single-family homes', 'Houses', $what);
+        }
+
+        if ($this->area !== '') {
+            return $what.' in your drawn area';
         }
 
         return trim($this->q) !== '' ? $what.' in '.trim($this->q) : $what;
@@ -375,7 +416,11 @@ new class extends Component {
         <div class="results-head">
             <div>
                 <h1>{{ $this->heading }}</h1>
-                <p>{{ number_format($this->listings->total()) }} {{ Str::plural('home', $this->listings->total()) }} found</p>
+                <p>{{ number_format($this->listings->total()) }} {{ Str::plural('home', $this->listings->total()) }} found
+                    @if ($area !== '')
+                        · <button type="button" class="link" wire:click="clearArea" data-test="clear-area">Remove drawn area</button>
+                    @endif
+                </p>
             </div>
             <div class="results-tools">
                 <label class="sr-only" for="search-sort">Sort by</label>
@@ -398,12 +443,12 @@ new class extends Component {
 
         <div @class(['results-layout', 'is-map' => $view === 'map'])>
             <div class="results-map" wire:ignore>
-                <div class="map" data-map data-listen="map-points" data-scroll-zoom="true" data-points='@json($this->mapPoints())'>
+                <div class="map" data-map data-listen="map-points" data-draw data-area="{{ $area }}" data-scroll-zoom="true" data-points='@json($this->mapPoints())'>
                     <span class="map-note">Loading map…</span>
                 </div>
             </div>
 
-            <div wire:loading.class="results-loading" wire:target="q, status, types, min_price, max_price, beds, baths, sort, gotoPage, nextPage, previousPage, clearFilters">
+            <div wire:loading.class="results-loading" wire:target="q, status, types, min_price, max_price, beds, baths, sort, gotoPage, nextPage, previousPage, clearFilters, setArea, clearArea">
                 @if ($this->listings->isEmpty())
                     <div class="empty">
                         <h2>No homes match your search</h2>

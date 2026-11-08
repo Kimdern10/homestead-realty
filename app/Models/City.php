@@ -64,6 +64,16 @@ class City extends Model
     }
 
     /**
+     * Guides written about this city.
+     *
+     * @return HasMany<Post, $this>
+     */
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class);
+    }
+
+    /**
      * Cities in the order the owner chose.
      *
      * @param  Builder<City>  $query

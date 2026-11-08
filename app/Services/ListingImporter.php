@@ -155,7 +155,7 @@ class ListingImporter
      *
      * @param  array<string, mixed>  $record
      */
-    private function city(string $name, string $stateCode, array $record): City
+    public function city(string $name, string $stateCode, array $record): City
     {
         $existing = City::query()->where('name', $name)->where('state_code', $stateCode)->first();
 

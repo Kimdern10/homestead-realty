@@ -8,9 +8,11 @@ use Database\Factories\EnquiryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -30,12 +32,15 @@ use Illuminate\Support\Carbon;
  * @property string|null $tour_time
  * @property string|null $tour_kind
  * @property string|null $ip_address
+ * @property Carbon|null $follow_up_on
+ * @property string|null $source
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Listing|null $listing
  * @property-read Agent|null $agent
+ * @property-read Collection<int, EnquiryNote> $notes
  */
-#[Fillable(['type', 'status', 'listing_id', 'agent_id', 'user_id', 'name', 'email', 'phone', 'message', 'tour_date', 'tour_time', 'tour_kind', 'ip_address'])]
+#[Fillable(['type', 'status', 'listing_id', 'agent_id', 'user_id', 'name', 'email', 'phone', 'message', 'tour_date', 'tour_time', 'tour_kind', 'ip_address', 'follow_up_on', 'source'])]
 class Enquiry extends Model
 {
     /** @use HasFactory<EnquiryFactory> */
@@ -73,7 +78,26 @@ class Enquiry extends Model
             'type' => EnquiryType::class,
             'status' => EnquiryStatus::class,
             'tour_date' => 'date',
+            'follow_up_on' => 'date',
         ];
+    }
+
+    /**
+     * The agent's private notes on this lead, newest first.
+     *
+     * @return HasMany<EnquiryNote, $this>
+     */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(EnquiryNote::class)->latest();
+    }
+
+    /**
+     * Whether the follow-up date has arrived and the lead is still open.
+     */
+    public function followUpDue(): bool
+    {
+        return $this->follow_up_on !== null && $this->status->isOpen() && $this->follow_up_on->lte(today());
     }
 
     /**

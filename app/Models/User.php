@@ -94,7 +94,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
      */
     public function favorites(): BelongsToMany
     {
-        return $this->belongsToMany(Listing::class, 'favorites')->withTimestamps();
+        return $this->belongsToMany(Listing::class, 'favorites')->withPivot('notified_price')->withTimestamps();
     }
 
     /**

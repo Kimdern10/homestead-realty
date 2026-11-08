@@ -50,7 +50,8 @@ new #[Title('Listings')] class extends Component {
             ->when(! $user->isAdmin(), fn (Builder $query) => $query->where('agent_id', $user->agent->id))
             ->when($user->isAdmin() && $this->agent !== '', fn (Builder $query) => $query->where('agent_id', (int) $this->agent))
             ->when(ListingStatus::tryFrom($this->status), fn (Builder $query, ListingStatus $status) => $query->where('status', $status))
-            ->when($this->source === 'feed', fn (Builder $query) => $query->where('source', '!=', 'manual'))
+            ->when($this->source === 'feed', fn (Builder $query) => $query->where('source', \App\Services\ListingImporter::SOURCE))
+            ->when($this->source === 'owner', fn (Builder $query) => $query->where('source', 'owner'))
             ->when($this->source === 'manual', fn (Builder $query) => $query->where('source', 'manual'))
             ->when(trim($this->search) !== '', function (Builder $query) {
                 $like = '%'.trim($this->search).'%';
@@ -164,6 +165,7 @@ new #[Title('Listings')] class extends Component {
             <flux:select.option value="">{{ __('All sources') }}</flux:select.option>
             <flux:select.option value="manual">{{ __('Added by us') }}</flux:select.option>
             <flux:select.option value="feed">{{ __('From the live feed') }}</flux:select.option>
+            <flux:select.option value="owner">{{ __('Sent in by owners') }}</flux:select.option>
         </flux:select>
         @if (auth()->user()->isAdmin())
             <flux:select wire:model.live="agent" :aria-label="__('Agent')">

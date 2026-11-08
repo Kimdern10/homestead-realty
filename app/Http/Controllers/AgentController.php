@@ -18,7 +18,9 @@ class AgentController extends Controller
             ->withCount([
                 'listings as active_count' => fn ($query) => $query->published()->whereIn('status', [ListingStatus::ForSale, ListingStatus::ForRent, ListingStatus::Pending]),
                 'listings as sold_count' => fn ($query) => $query->published()->where('status', ListingStatus::Sold),
+                'reviews as reviews_count' => fn ($query) => $query->approved(),
             ])
+            ->withAvg(['reviews as rating_avg' => fn ($query) => $query->approved()], 'rating')
             ->orderBy('name')->get();
 
         return view('agents.index', compact('agents'));

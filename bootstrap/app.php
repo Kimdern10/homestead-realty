@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureUserIsStaff;
+use App\Http\Middleware\RecordVisit;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Stripe and Paystack can't send a form token; their webhooks are checked by signature instead.
         $middleware->validateCsrfTokens(except: ['webhooks/*']);
+
+        $middleware->web(append: [RecordVisit::class]);
 
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,

@@ -23,6 +23,7 @@ use Illuminate\Support\Str;
  * @property string $slug
  * @property string|null $title
  * @property string|null $phone
+ * @property string|null $whatsapp
  * @property string|null $email
  * @property string|null $license_number
  * @property int|null $years_experience
@@ -36,7 +37,7 @@ use Illuminate\Support\Str;
  * @property Carbon|null $updated_at
  * @property-read User $user
  */
-#[Fillable(['user_id', 'name', 'slug', 'title', 'phone', 'email', 'license_number', 'years_experience', 'languages', 'zip_codes', 'homes_sold', 'bio', 'photo_path', 'is_active'])]
+#[Fillable(['user_id', 'name', 'slug', 'title', 'phone', 'whatsapp', 'email', 'license_number', 'years_experience', 'languages', 'zip_codes', 'homes_sold', 'bio', 'photo_path', 'is_active'])]
 class Agent extends Model
 {
     /** @use HasFactory<AgentFactory> */
@@ -163,5 +164,49 @@ class Agent extends Model
     public function phoneLink(): ?string
     {
         return filled($this->phone) ? 'tel:'.preg_replace('/[^0-9+]/', '', $this->phone) : null;
+    }
+
+    /**
+     * A WhatsApp chat link, optionally with a ready-made first message.
+     * US numbers without a country code get "1" added.
+     */
+    public function whatsappLink(?string $message = null): ?string
+    {
+        $digits = preg_replace('/\D/', '', (string) ($this->whatsapp ?: ''));
+
+        if ($digits === null || strlen($digits) < 10) {
+            return null;
+        }
+
+        if (strlen($digits) === 10) {
+            $digits = '1'.$digits;
+        }
+
+        return 'https://wa.me/'.$digits.($message !== null ? '?text='.rawurlencode($message) : '');
+    }
+
+    /**
+     * Reviews visitors left for this agent.
+     *
+     * @return HasMany<Review, $this>
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Average approved star rating and how many approved reviews there are.
+     *
+     * @return array{average: float, count: int}
+     */
+    public function ratingSummary(): array
+    {
+        $row = $this->reviews()->approved()->selectRaw('AVG(rating) as average, COUNT(*) as total')->first();
+
+        return [
+            'average' => round((float) ($row->average ?? 0), 1),
+            'count' => (int) ($row->total ?? 0),
+        ];
     }
 }

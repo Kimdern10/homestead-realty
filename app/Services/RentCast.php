@@ -149,6 +149,54 @@ class RentCast
     }
 
     /**
+     * RentCast's automated value estimate for one address, or null when it can't be had
+     * (feed off, no key, no requests left, or RentCast failed). Uses one request per new address.
+     *
+     * @param  array{address: string, beds?: int|null, baths?: float|null, sqft?: int|null}  $home
+     * @return array{price: int, low: int, high: int}|null
+     */
+    public function valueEstimate(array $home): ?array
+    {
+        $query = array_filter([
+            'address' => $home['address'],
+            'bedrooms' => $home['beds'] ?? null,
+            'bathrooms' => $home['baths'] ?? null,
+            'squareFootage' => $home['sqft'] ?? null,
+            'compCount' => 10,
+        ], fn ($value) => $value !== null && $value !== '');
+
+        $cacheKey = $this->cacheKey('avm', $query);
+
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey) ?: null;
+        }
+
+        if (! $this->isActive() || $this->requestsLeft() === 0) {
+            return null;
+        }
+
+        try {
+            $response = Http::baseUrl((string) config('services.rentcast.url'))
+                ->withHeaders(['X-Api-Key' => (string) config('services.rentcast.key'), 'Accept' => 'application/json'])
+                ->timeout(20)
+                ->get('/avm/value', $query);
+        } catch (ConnectionException) {
+            return null;
+        }
+
+        $this->countRequest();
+
+        $price = (int) $response->json('price');
+        $result = $response->successful() && $price > 0
+            ? ['price' => $price, 'low' => (int) ($response->json('priceRangeLow') ?: $price * 0.92), 'high' => (int) ($response->json('priceRangeHigh') ?: $price * 1.08)]
+            : [];
+
+        Cache::put($cacheKey, $result, now()->addDays(14));
+
+        return $result ?: null;
+    }
+
+    /**
      * Add one to this month's request count.
      */
     private function countRequest(): void
@@ -163,7 +211,7 @@ class RentCast
     }
 
     /**
-     * @param  array<string, string|int>  $query
+     * @param  array<string, string|int|float>  $query  listing searches use text and whole numbers; value estimates also send bathrooms like 2.5
      */
     private function cacheKey(string $type, array $query): string
     {

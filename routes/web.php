@@ -3,8 +3,10 @@
 use App\Http\Controllers\AgentController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\GuideController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ListingController;
+use App\Http\Controllers\OpenHouseController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SitemapController;
@@ -12,7 +14,17 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
 Route::livewire('search', 'pages::search')->name('search');
+Route::get('compare', [ListingController::class, 'compare'])->name('compare');
+Route::get('homes/cards', [ListingController::class, 'cards'])->middleware('throttle:60,1')->name('listings.cards');
 Route::get('homes/{listing}', [ListingController::class, 'show'])->name('listings.show');
+Route::get('homes/{listing}/flyer', [ListingController::class, 'flyer'])->name('listings.flyer');
+Route::get('open-houses', OpenHouseController::class)->name('open-houses');
+Route::livewire('home-value', 'pages::home-value')->name('home-value');
+Route::view('calculators/affordability', 'calculators.affordability')->name('calculators.affordability');
+Route::view('calculators/rent-vs-buy', 'calculators.rent-vs-buy')->name('calculators.rent-vs-buy');
+Route::livewire('sell', 'pages::sell')->name('sell');
+Route::get('guides', [GuideController::class, 'index'])->name('guides.index');
+Route::get('guides/{post}', [GuideController::class, 'show'])->name('guides.show');
 Route::get('cities', [CityController::class, 'index'])->name('cities.index');
 Route::get('cities/{city}', [CityController::class, 'show'])->name('cities.show');
 Route::get('agents', [AgentController::class, 'index'])->name('agents.index');

@@ -60,3 +60,19 @@ test('the admin sees every listing', function () {
         ->assertSee('1 First St')
         ->assertSee('2 Second St');
 });
+
+test('the admin can open every new dashboard page', function (string $route) {
+    $this->actingAs(App\Models\User::factory()->admin()->create())->get(route($route))->assertOk();
+})->with(['dashboard.open-houses', 'dashboard.reviews', 'dashboard.reports', 'dashboard.submissions', 'dashboard.guides.index', 'dashboard.guides.create']);
+
+test('agents can plan open houses but not open office pages', function () {
+    $agent = App\Models\Agent::factory()->create();
+
+    $this->actingAs($agent->user)->get(route('dashboard.open-houses'))->assertOk();
+    $this->actingAs($agent->user)->get(route('dashboard.submissions'))->assertForbidden();
+    $this->actingAs($agent->user)->get(route('dashboard.guides.index'))->assertForbidden();
+});
+
+test('the new public pages load', function (string $route) {
+    $this->get(route($route))->assertOk();
+})->with(['home-value', 'sell', 'guides.index', 'open-houses', 'compare']);

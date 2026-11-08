@@ -33,9 +33,11 @@ class EnquiryReceived extends Mailable
     public function envelope(): Envelope
     {
         $about = $this->enquiry->listing?->address;
-        $subject = $this->enquiry->type === EnquiryType::Tour
-            ? 'Tour request: '.($about ?? 'a home')
-            : 'New message'.($about ? ' about '.$about : '');
+        $subject = match ($this->enquiry->type) {
+            EnquiryType::Tour => 'Tour request: '.($about ?? 'a home'),
+            EnquiryType::Valuation => 'Home valuation request from '.$this->enquiry->name,
+            default => 'New message'.($about ? ' about '.$about : ''),
+        };
 
         return new Envelope(
             replyTo: [new Address($this->enquiry->email, $this->enquiry->name)],

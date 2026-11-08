@@ -93,3 +93,28 @@ test('a signed-in visitor can save a search once', function () {
     expect($user->savedSearches)->toHaveCount(1)
         ->and($user->savedSearches->first()->filters)->toBe(['q' => 'Austin', 'status' => 'for_sale', 'beds' => 3]);
 });
+
+test('drawing an area on the map shows only homes inside it', function () {
+    $inside = Listing::factory()->create(['latitude' => 30.30, 'longitude' => -97.75, 'address' => '1 Inside Road']);
+    Listing::factory()->create(['latitude' => 30.50, 'longitude' => -97.75, 'address' => '2 Outside Road']);
+
+    $component = Livewire::test('pages::search')
+        ->dispatch('area-drawn', points: [[30.25, -97.80], [30.35, -97.80], [30.35, -97.70], [30.25, -97.70]])
+        ->assertSet('view', 'map')
+        ->assertSee('1 Inside Road')
+        ->assertDontSee('2 Outside Road')
+        ->assertSee('in your drawn area');
+
+    expect($component->get('area'))->toBe('30.25,-97.8;30.35,-97.8;30.35,-97.7;30.25,-97.7');
+
+    $component->call('clearArea')->assertSet('area', '')->assertSee('2 Outside Road');
+});
+
+test('a broken area in the address bar is ignored', function () {
+    Listing::factory()->create(['address' => '3 Any Road']);
+
+    expect(Listing::parseArea('1,2;oops'))->toBe([])
+        ->and(Listing::parseArea('1,2;3,4'))->toBe([]);
+
+    Livewire::withQueryParams(['area' => 'not-a-shape'])->test('pages::search')->assertSee('3 Any Road');
+});

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Agent;
 use App\Models\City;
 use App\Models\Listing;
+use App\Models\Post;
 use Illuminate\Http\Response;
 
 class SitemapController extends Controller
@@ -17,9 +18,10 @@ class SitemapController extends Controller
         $listings = Listing::query()->published()->select(['id', 'slug', 'updated_at'])->latest('updated_at')->get();
         $cities = City::query()->select(['id', 'slug', 'updated_at'])->get();
         $agents = Agent::query()->active()->select(['id', 'slug', 'updated_at'])->get();
+        $posts = Post::query()->live()->select(['id', 'slug', 'updated_at'])->get();
 
         return response()
-            ->view('sitemap', compact('listings', 'cities', 'agents'))
+            ->view('sitemap', compact('listings', 'cities', 'agents', 'posts'))
             ->header('Content-Type', 'application/xml; charset=UTF-8');
     }
 
@@ -32,6 +34,8 @@ class SitemapController extends Controller
             'User-agent: *',
             'Disallow: /dashboard',
             'Disallow: /saved',
+            'Disallow: /compare',
+            'Disallow: /homes/cards',
             'Disallow: /settings',
             'Allow: /',
             '',

@@ -1,5 +1,7 @@
 @php
     $site = \App\Models\Setting::values();
+    $rating = $agent->ratingSummary();
+    $whatsapp = $agent->whatsappLink('Hi '.Str::before($agent->name, ' ').', I found you on '.$site['business_name'].'.');
 @endphp
 
 <x-layouts::site :title="$agent->name.', '.($agent->title ?: 'Real estate agent')" :description="Str::limit($agent->bio ?: $agent->name.' is a real estate agent with '.$site['business_name'].'.', 155)" :image="$agent->photoUrl()" current="agents" type="profile">
@@ -15,6 +17,7 @@
             'description' => $agent->bio,
             'worksFor' => ['@type' => 'RealEstateAgent', 'name' => $site['business_name'], 'url' => route('home')],
             'areaServed' => $cities->map(fn ($city) => ['@type' => 'City', 'name' => $city->label()])->values()->all() ?: null,
+            'aggregateRating' => $rating['count'] > 0 ? ['@type' => 'AggregateRating', 'ratingValue' => $rating['average'], 'reviewCount' => $rating['count'], 'bestRating' => 5, 'worstRating' => 1] : null,
         ]), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) !!}</script>
     </x-slot:head>
 
@@ -28,6 +31,7 @@
                     <p class="profile__role">{{ $agent->title ?: 'Real estate agent' }} · {{ $site['business_name'] }}</p>
                     <div class="listing-meta">
                         <span class="chip chip--strong"><x-icon name="key" /> {{ number_format($agent->soldCount()) }} {{ Str::plural('home', $agent->soldCount()) }} sold</span>
+                        @if ($rating['count'] > 0)<a class="chip" href="#reviews"><x-icon name="star" /> {{ number_format($rating['average'], 1) }} ({{ $rating['count'] }} {{ Str::plural('review', $rating['count']) }})</a>@endif
                         @if ($agent->years_experience)<span class="chip"><x-icon name="clock" /> {{ $agent->years_experience }} years' experience</span>@endif
                         @if ($agent->languages)<span class="chip"><x-icon name="user" /> Speaks {{ $agent->languages }}</span>@endif
                         @if ($agent->license_number)<span class="chip"><x-icon name="shield" /> License {{ $agent->license_number }}</span>@endif
@@ -37,6 +41,7 @@
                     </div>
                     <div class="profile__contact">
                         @if ($phone = $agent->phoneLink())<a class="btn btn--primary btn--sm" href="{{ $phone }}"><x-icon name="phone" /> {{ $agent->phone }}</a>@endif
+                        @if ($whatsapp)<a class="btn btn--whatsapp btn--sm" href="{{ $whatsapp }}" target="_blank" rel="noopener"><x-icon name="whatsapp" /> WhatsApp</a>@endif
                         <a class="btn btn--outline btn--sm" href="#contact"><x-icon name="mail" /> Send a message</a>
                     </div>
                 </div>
@@ -69,6 +74,10 @@
                             @endforeach
                         </div>
                     @endif
+                </div>
+
+                <div class="block" id="reviews">
+                    <livewire:agent-reviews :agent="$agent" />
                 </div>
 
                 @if ($sold->isNotEmpty())

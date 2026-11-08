@@ -6,6 +6,7 @@ use App\Enums\ListingStatus;
 use App\Models\Agent;
 use App\Models\City;
 use App\Models\Listing;
+use App\Models\Post;
 use Illuminate\Contracts\View\View;
 
 class HomeController extends Controller
@@ -28,6 +29,14 @@ class HomeController extends Controller
             ->where('status', ListingStatus::ForRent)
             ->latest('listed_at')->take(4)->get();
 
+        $openHouses = Listing::query()->published()->forCards()
+            ->whereHas('openHouses', fn ($query) => $query->where('ends_at', '>', now())->where('starts_at', '<', now()->addDays(8)))
+            ->take(8)->get()
+            ->sortBy(fn (Listing $listing) => $listing->nextOpenHouse?->starts_at)
+            ->values();
+
+        $guides = Post::query()->live()->with('city')->latest('published_at')->take(3)->get();
+
         $cities = City::query()->ordered()
             ->withCount(['listings as available_count' => fn ($query) => $query->published()->whereIn('status', [ListingStatus::ForSale, ListingStatus::ForRent])])
             ->where('is_featured', true)->take(8)->get();
@@ -42,6 +51,6 @@ class HomeController extends Controller
             'sold' => (int) Agent::query()->active()->get()->sum(fn (Agent $agent) => $agent->soldCount()),
         ];
 
-        return view('home', compact('featured', 'newest', 'rentals', 'cities', 'agents', 'stats'));
+        return view('home', compact('featured', 'newest', 'rentals', 'openHouses', 'guides', 'cities', 'agents', 'stats'));
     }
 }

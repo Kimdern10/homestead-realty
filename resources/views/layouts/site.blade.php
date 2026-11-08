@@ -100,6 +100,8 @@
                 <a href="{{ $href }}">{{ $label }}</a>
             @endforeach
             <a href="{{ route('saved') }}">Saved homes</a>
+            <a href="{{ route('home-value') }}">What's my home worth?</a>
+            <a href="{{ route('guides.index') }}">Guides</a>
             @if ($user?->isStaff())
                 <a class="btn btn--dark" href="{{ route('dashboard') }}">Go to your dashboard</a>
             @elseif ($user)
@@ -140,7 +142,19 @@
                             <li><a href="{{ route('search', ['status' => 'for_rent']) }}">Homes for rent</a></li>
                             <li><a href="{{ route('search', ['status' => 'sold']) }}">Recently sold</a></li>
                             <li><a href="{{ route('search', ['view' => 'map']) }}">Search on a map</a></li>
+                            <li><a href="{{ route('open-houses') }}">Open houses</a></li>
                             <li><a href="{{ route('agents.index') }}">Find an agent</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>Tools</h4>
+                        <ul>
+                            <li><a href="{{ route('home-value') }}">What's my home worth?</a></li>
+                            <li><a href="{{ route('sell') }}">List your home</a></li>
+                            <li><a href="{{ route('calculators.affordability') }}">Affordability calculator</a></li>
+                            <li><a href="{{ route('calculators.rent-vs-buy') }}">Rent or buy?</a></li>
+                            <li><a href="{{ route('compare') }}">Compare homes</a></li>
+                            <li><a href="{{ route('guides.index') }}">Guides</a></li>
                         </ul>
                     </div>
                     @if ($footerCities->isNotEmpty())

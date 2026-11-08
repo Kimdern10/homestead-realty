@@ -39,6 +39,16 @@ new class extends Component {
     }
 
     /**
+     * Turn the daily email for a saved search on or off.
+     */
+    public function toggleAlerts(int $id): void
+    {
+        $search = auth()->user()->savedSearches()->findOrFail($id);
+        $search->update(['alerts_enabled' => ! $search->alerts_enabled]);
+        unset($this->searches);
+    }
+
+    /**
      * Remove a home from the saved list.
      */
     public function removeHome(int $id): void
@@ -59,7 +69,7 @@ new class extends Component {
     <div class="page-head">
         <div class="container">
             <h1>Saved homes</h1>
-            <p>Homes and searches you've saved, {{ Str::before(auth()->user()->name, ' ') }}. Tap the heart on any home to add it here.</p>
+            <p>Homes and searches you've saved, {{ Str::before(auth()->user()->name, ' ') }}. Tap the heart on any home to add it here. We'll email you if the price drops.</p>
         </div>
     </div>
 
@@ -89,7 +99,7 @@ new class extends Component {
             <div class="section-head">
                 <div>
                     <h2>Saved searches</h2>
-                    <p>Run a saved search again to see what's new.</p>
+                    <p>We email you once a day when new homes match. Turn it off any time.</p>
                 </div>
             </div>
             @if ($this->searches->isEmpty())
@@ -103,6 +113,7 @@ new class extends Component {
                                 <p>{{ $search->summary() }} · Saved {{ $search->created_at->diffForHumans() }}</p>
                             </div>
                             <div class="saved-search__actions">
+                                <button class="btn btn--outline btn--sm" type="button" wire:click="toggleAlerts({{ $search->id }})" aria-pressed="{{ $search->alerts_enabled ? 'true' : 'false' }}" data-test="alerts-toggle"><x-icon name="bell" /> {{ $search->alerts_enabled ? 'Email alerts on' : 'Email alerts off' }}</button>
                                 <a class="btn btn--primary btn--sm" href="{{ $search->url() }}">See homes</a>
                                 <button class="btn btn--outline btn--sm" type="button" wire:click="deleteSearch({{ $search->id }})" wire:confirm="Delete this saved search?" aria-label="Delete saved search {{ $search->name }}"><x-icon name="trash" /></button>
                             </div>

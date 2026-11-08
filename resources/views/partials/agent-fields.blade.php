@@ -6,8 +6,9 @@
             <flux:input wire:model="name" :label="__('Full name *')" />
             <flux:input wire:model="title" :label="__('Job title')" :placeholder="__('e.g. Realtor®, Broker Associate')" />
             <flux:input wire:model="phone" type="tel" icon="phone" :label="__('Phone')" placeholder="(512) 555-0142" />
-            <flux:input wire:model="contact_email" type="email" icon="envelope" :label="__('Email for enquiries')" :description="__('Leave empty to use the login email.')" />
+            <flux:input wire:model="whatsapp" type="tel" icon="chat-bubble-left-right" :label="__('WhatsApp number')" placeholder="+1 512 555 0142" :description="__('Adds a “Chat on WhatsApp” button. Leave empty to hide it.')" />
             <flux:input wire:model="license_number" :label="__('License number')" />
+            <flux:input wire:model="contact_email" type="email" icon="envelope" :label="__('Email for enquiries')" :description="__('Leave empty to use the login email.')" />
             <flux:input wire:model="years_experience" type="number" min="0" :label="__('Years of experience')" />
         </div>
         <flux:input wire:model="languages" :label="__('Languages')" :placeholder="__('e.g. English and Spanish')" />

@@ -20,6 +20,8 @@ abstract class AgentProfileComponent extends Component
 
     public string $phone = '';
 
+    public string $whatsapp = '';
+
     public string $contact_email = '';
 
     public string $license_number = '';
@@ -45,6 +47,7 @@ abstract class AgentProfileComponent extends Component
         $this->name = $agent->name;
         $this->title = (string) $agent->title;
         $this->phone = (string) $agent->phone;
+        $this->whatsapp = (string) $agent->whatsapp;
         $this->contact_email = (string) $agent->email;
         $this->license_number = (string) $agent->license_number;
         $this->years_experience = (string) $agent->years_experience;
@@ -64,6 +67,7 @@ abstract class AgentProfileComponent extends Component
             'name' => ['required', 'string', 'max:100'],
             'title' => ['nullable', 'string', 'max:100'],
             'phone' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9(][0-9\s\-().]{6,24}$/'],
+            'whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9(][0-9\s\-().]{6,24}$/'],
             'contact_email' => ['nullable', 'email', 'max:150'],
             'license_number' => ['nullable', 'string', 'max:60'],
             'years_experience' => ['nullable', 'integer', 'min:0', 'max:70'],
@@ -82,6 +86,7 @@ abstract class AgentProfileComponent extends Component
     {
         return [
             'phone.regex' => 'Please enter a valid phone number, e.g. (512) 555-0142.',
+            'whatsapp.regex' => 'Please enter a valid WhatsApp number, e.g. +1 512 555 0142.',
         ];
     }
 
@@ -106,6 +111,7 @@ abstract class AgentProfileComponent extends Component
             'name' => trim($this->name),
             'title' => $this->title ?: null,
             'phone' => $this->phone ?: null,
+            'whatsapp' => $this->whatsapp ?: null,
             'email' => $this->contact_email ? strtolower($this->contact_email) : null,
             'license_number' => $this->license_number ?: null,
             'years_experience' => $this->years_experience !== '' ? (int) $this->years_experience : null,

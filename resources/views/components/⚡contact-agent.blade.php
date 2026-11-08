@@ -183,6 +183,7 @@ new class extends Component {
             'tour_time' => $tour ? $validated['tour_time'] : null,
             'tour_kind' => $tour ? $validated['tour_kind'] : null,
             'ip_address' => request()->ip(),
+            'source' => session('visit_source'),
         ]);
 
         try {

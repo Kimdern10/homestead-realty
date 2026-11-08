@@ -6,12 +6,21 @@
     <url><loc>{{ route('search', ['status' => 'sold']) }}</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
     <url><loc>{{ route('cities.index') }}</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
     <url><loc>{{ route('agents.index') }}</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+    <url><loc>{{ route('open-houses') }}</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+    <url><loc>{{ route('guides.index') }}</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+    <url><loc>{{ route('home-value') }}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+    <url><loc>{{ route('sell') }}</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+    <url><loc>{{ route('calculators.affordability') }}</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+    <url><loc>{{ route('calculators.rent-vs-buy') }}</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
     <url><loc>{{ route('privacy') }}</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
 @foreach ($cities as $city)
     <url><loc>{{ route('cities.show', $city) }}</loc>@if ($city->updated_at)<lastmod>{{ $city->updated_at->toAtomString() }}</lastmod>@endif<changefreq>weekly</changefreq><priority>0.8</priority></url>
 @endforeach
 @foreach ($agents as $agent)
     <url><loc>{{ route('agents.show', $agent) }}</loc>@if ($agent->updated_at)<lastmod>{{ $agent->updated_at->toAtomString() }}</lastmod>@endif<changefreq>weekly</changefreq><priority>0.6</priority></url>
+@endforeach
+@foreach ($posts as $post)
+    <url><loc>{{ route('guides.show', $post) }}</loc>@if ($post->updated_at)<lastmod>{{ $post->updated_at->toAtomString() }}</lastmod>@endif<changefreq>monthly</changefreq><priority>0.6</priority></url>
 @endforeach
 @foreach ($listings as $listing)
     <url><loc>{{ route('listings.show', $listing) }}</loc>@if ($listing->updated_at)<lastmod>{{ $listing->updated_at->toAtomString() }}</lastmod>@endif<changefreq>weekly</changefreq><priority>0.8</priority></url>

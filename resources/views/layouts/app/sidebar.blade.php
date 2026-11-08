@@ -28,13 +28,16 @@
                         {{ $user->isAdmin() ? __('Listings') : __('My listings') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="inbox" :href="route('dashboard.enquiries.index')" :current="request()->routeIs('dashboard.enquiries.*')" :badge="\App\Models\Enquiry::query()->visibleTo($user)->where('status', \App\Enums\EnquiryStatus::New)->count() ?: null" wire:navigate>
-                        {{ __('Enquiries & tours') }}
+                        {{ __('Leads') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="document-text" :href="route('dashboard.applications.index')" :current="request()->routeIs('dashboard.applications.*')" :badge="\App\Models\RentalApplication::query()->visibleTo($user)->where('status', \App\Enums\ApplicationStatus::New)->count() ?: null" wire:navigate>
                         {{ __('Rental applications') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="credit-card" :href="route('dashboard.payments')" :current="request()->routeIs('dashboard.payments')" wire:navigate>
                         {{ __('Payments') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="key" :href="route('dashboard.open-houses')" :current="request()->routeIs('dashboard.open-houses')" wire:navigate>
+                        {{ __('Open houses') }}
                     </flux:sidebar.item>
                     @if ($user->isAgent())
                         <flux:sidebar.item icon="user-circle" :href="route('dashboard.profile')" :current="request()->routeIs('dashboard.profile')" wire:navigate>
@@ -53,6 +56,18 @@
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="calendar-days" :href="route('dashboard.bookings')" :current="request()->routeIs('dashboard.bookings')" :badge="\App\Models\ServiceBooking::query()->where('status', \App\Enums\ApplicationStatus::New)->count() ?: null" wire:navigate>
                             {{ __('Service bookings') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="home" :href="route('dashboard.submissions')" :current="request()->routeIs('dashboard.submissions')" :badge="\App\Models\Listing::query()->where('source', 'owner')->where('is_published', false)->count() ?: null" wire:navigate>
+                            {{ __('Owner submissions') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="star" :href="route('dashboard.reviews')" :current="request()->routeIs('dashboard.reviews')" :badge="\App\Models\Review::query()->where('status', \App\Models\Review::PENDING)->count() ?: null" wire:navigate>
+                            {{ __('Reviews') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="book-open" :href="route('dashboard.guides.index')" :current="request()->routeIs('dashboard.guides.*')" wire:navigate>
+                            {{ __('Guides') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="chart-bar" :href="route('dashboard.reports')" :current="request()->routeIs('dashboard.reports')" wire:navigate>
+                            {{ __('Reports') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
 

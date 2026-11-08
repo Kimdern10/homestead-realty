@@ -63,6 +63,19 @@
         </div>
     @endif
 
+    <section class="section section--tight" data-recent-list hidden>
+        <div class="container">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Pick up where you left off</span>
+                    <h2>Recently viewed</h2>
+                </div>
+                <button type="button" class="link" data-recent-clear>Clear history</button>
+            </div>
+            <div class="scroller" data-recent-cards></div>
+        </div>
+    </section>
+
     @if ($featured->isNotEmpty())
         <section class="section">
             <div class="container">
@@ -135,6 +148,43 @@
         </section>
     @endif
 
+    @if ($openHouses->isNotEmpty())
+        <section class="section section--soft">
+            <div class="container">
+                <div class="section-head reveal">
+                    <div>
+                        <span class="eyebrow">This week</span>
+                        <h2>Open houses</h2>
+                        <p>Walk in, no appointment needed.</p>
+                    </div>
+                    <a class="link" href="{{ route('open-houses') }}">All open houses <x-icon name="arrow-right" /></a>
+                </div>
+                <div class="scroller">
+                    @foreach ($openHouses as $listing)
+                        <x-listing-card :listing="$listing" />
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
+
+    <section class="section">
+        <div class="container">
+            <div class="section-head reveal">
+                <div>
+                    <span class="eyebrow">Free tools</span>
+                    <h2>Plan your next move</h2>
+                </div>
+            </div>
+            <div class="tools" data-stagger>
+                <a class="tool" href="{{ route('home-value') }}"><span class="tool__icon"><x-icon name="tag" /></span><b>What's my home worth?</b><span>A free estimate in a minute.</span></a>
+                <a class="tool" href="{{ route('calculators.affordability') }}"><span class="tool__icon"><x-icon name="calculator" /></span><b>How much can I afford?</b><span>From your income and debts.</span></a>
+                <a class="tool" href="{{ route('calculators.rent-vs-buy') }}"><span class="tool__icon"><x-icon name="key" /></span><b>Rent or buy?</b><span>See which costs less over time.</span></a>
+                <a class="tool" href="{{ route('compare') }}"><span class="tool__icon"><x-icon name="compare" /></span><b>Compare homes</b><span>Up to four, side by side.</span></a>
+            </div>
+        </div>
+    </section>
+
     @if ($cities->isNotEmpty())
         <section class="section section--soft">
             <div class="container">
@@ -193,6 +243,25 @@
         </section>
     @endif
 
+    @if ($guides->isNotEmpty())
+        <section class="section">
+            <div class="container">
+                <div class="section-head reveal">
+                    <div>
+                        <span class="eyebrow">Guides</span>
+                        <h2>Neighborhood guides and tips</h2>
+                    </div>
+                    <a class="link" href="{{ route('guides.index') }}">All guides <x-icon name="arrow-right" /></a>
+                </div>
+                <div class="grid grid--guides" data-stagger>
+                    @foreach ($guides as $post)
+                        <x-guide-card :post="$post" />
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
+
     <section class="section">
         <div class="container">
             <div class="cta reveal">
@@ -201,7 +270,8 @@
                     <p>Talk to a local agent about what your home could sell for. No pressure, no obligation.</p>
                 </div>
                 <div class="cta__actions">
-                    <a class="btn btn--primary" href="{{ route('agents.index') }}">Find an agent <x-icon name="arrow-right" /></a>
+                    <a class="btn btn--primary" href="{{ route('home-value') }}">What's my home worth? <x-icon name="arrow-right" /></a>
+                    <a class="btn btn--outline" href="{{ route('sell') }}">List your home</a>
                     @if (filled($site['phone']))
                         <a class="btn btn--outline" href="tel:{{ preg_replace('/[^0-9+]/', '', $site['phone']) }}"><x-icon name="phone" /> {{ $site['phone'] }}</a>
                     @endif

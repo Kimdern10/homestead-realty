@@ -16,7 +16,8 @@ class FavoriteController extends Controller
     {
         abort_unless($listing->is_published, 404);
 
-        $result = $request->user()->favorites()->toggle($listing->id);
+        // Remember the price when saved, so we can email if it drops later.
+        $result = $request->user()->favorites()->toggle([$listing->id => ['notified_price' => $listing->price]]);
         $saved = $result['attached'] !== [];
 
         if ($request->expectsJson()) {

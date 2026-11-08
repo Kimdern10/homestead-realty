@@ -21,6 +21,7 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('dashboard')->group(fun
     Route::livewire('applications', 'pages::dashboard.applications.index')->name('dashboard.applications.index');
     Route::livewire('applications/{application}', 'pages::dashboard.applications.show')->name('dashboard.applications.show');
     Route::livewire('payments', 'pages::dashboard.payments')->name('dashboard.payments');
+    Route::livewire('open-houses', 'pages::dashboard.open-houses')->name('dashboard.open-houses');
 
     Route::middleware('admin')->group(function () {
         Route::livewire('agents', 'pages::dashboard.agents.index')->name('dashboard.agents.index');
@@ -38,5 +39,11 @@ Route::middleware(['auth', 'staff', 'verified'])->prefix('dashboard')->group(fun
         Route::livewire('services', 'pages::dashboard.services')->name('dashboard.services');
         Route::livewire('home-types', 'pages::dashboard.home-types')->name('dashboard.home-types');
         Route::livewire('amenities', 'pages::dashboard.amenities')->name('dashboard.amenities');
+        Route::livewire('reviews', 'pages::dashboard.reviews')->name('dashboard.reviews');
+        Route::livewire('reports', 'pages::dashboard.reports')->name('dashboard.reports');
+        Route::livewire('submissions', 'pages::dashboard.submissions')->name('dashboard.submissions');
+        Route::livewire('guides', 'pages::dashboard.guides.index')->name('dashboard.guides.index');
+        Route::livewire('guides/create', 'pages::dashboard.guides.form')->name('dashboard.guides.create');
+        Route::livewire('guides/{post:id}/edit', 'pages::dashboard.guides.form')->name('dashboard.guides.edit');
     });
 });
