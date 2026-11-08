@@ -13,6 +13,6 @@
 @fonts('fraunces')
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
-{{-- Light mode first: dark only when the person picks it in Settings › Appearance. --}}
-<script>try { if (! localStorage.getItem('flux.appearance')) { localStorage.setItem('flux.appearance', 'light'); } } catch (e) {}</script>
+{{-- Light mode first; dark only when the person picks it in Settings › Appearance (there is no "follow the device" option). --}}
+<script>try { if (localStorage.getItem('flux.appearance') !== 'dark') { localStorage.setItem('flux.appearance', 'light'); } } catch (e) {}</script>
 @fluxAppearance
