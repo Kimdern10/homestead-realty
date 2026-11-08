@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Stripe and Paystack can't send a form token; their webhooks are checked by signature instead.
         $middleware->validateCsrfTokens(except: ['webhooks/*']);
 
+        // The light/dark choice is set by the browser, so it is a plain (unencrypted) cookie.
+        $middleware->encryptCookies(except: ['hr-theme']);
+
         $middleware->web(append: [RecordVisit::class]);
 
         $middleware->alias([

@@ -30,7 +30,7 @@
 @endphp
 
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en-US" data-theme="{{ request()->cookie('hr-theme') === 'dark' ? 'dark' : 'light' }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -56,7 +56,7 @@
 
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
-        <script>document.documentElement.classList.add('js'); document.documentElement.dataset.theme = 'light'; try { if (localStorage.getItem('hr-theme') === 'dark') { document.documentElement.dataset.theme = 'dark'; } } catch (e) {}</script>
+        <script>document.documentElement.classList.add('js'); try { if (localStorage.getItem('hr-theme') === 'dark' && document.documentElement.dataset.theme !== 'dark') { document.documentElement.dataset.theme = 'dark'; document.cookie = 'hr-theme=dark; path=/; max-age=31536000; SameSite=Lax'; } } catch (e) {}</script>
 
         @fonts('manrope')
         @fonts('fraunces')

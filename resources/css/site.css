@@ -737,7 +737,6 @@ body { font-size: 16px; line-height: 1.65; text-rendering: optimizeLegibility; }
 .lightbox__stage img.is-in { opacity: 1; transform: none; }
 
 /* Theme switch fades rather than snaps. */
-.theme-switching, .theme-switching * { transition: background-color .35s var(--ease), color .35s var(--ease), border-color .35s var(--ease) !important; }
 
 /* Reveal with an optional stagger delay. */
 .js .reveal { transition-delay: var(--delay, 0ms); }

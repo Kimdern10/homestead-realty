@@ -47,6 +47,10 @@ document.addEventListener('click', (event) => {
 // Light is the default; dark only when the visitor picked it. Page changes swap the <html> tag,
 // so the choice is put back after every change (and just before the new page shows, to avoid a flash).
 const savedTheme = () => {
+    if (/(?:^|; )hr-theme=dark(?:;|$)/.test(document.cookie)) {
+        return 'dark';
+    }
+
     try {
         return localStorage.getItem('hr-theme') === 'dark' ? 'dark' : 'light';
     } catch (error) {
@@ -68,9 +72,10 @@ document.addEventListener('click', (event) => {
     const current = root.dataset.theme === 'dark' ? 'dark' : 'light';
     const next = current === 'dark' ? 'light' : 'dark';
 
-    root.classList.add('theme-switching');
     root.dataset.theme = next;
-    setTimeout(() => root.classList.remove('theme-switching'), 400);
+
+    // A cookie lets the server send every page in the chosen mode, so there is no flash.
+    document.cookie = `hr-theme=${next}; path=/; max-age=31536000; SameSite=Lax`;
 
     try {
         localStorage.setItem('hr-theme', next);
