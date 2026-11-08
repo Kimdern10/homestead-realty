@@ -1,13 +1,13 @@
 <x-mail::message>
 # Confirm your email
 
-Enter this code on the {{ $business }} website to finish creating your account:
+Welcome to {{ $business }}! Enter this code on the website to finish creating your account:
 
 <x-mail::panel>
-<div style="font-size: 32px; font-weight: 700; letter-spacing: 10px; text-align: center;">{{ $code }}</div>
+<div style="font-size: 34px; font-weight: 800; letter-spacing: 12px; text-align: center; color: #121417;">{{ $code }}</div>
 </x-mail::panel>
 
-The code works for {{ $minutes }} minutes. If you didn't create an account, you can ignore this email.
+The code works for {{ $minutes }} minutes. Once confirmed, you can save homes and searches and get alerts when new homes match.
 
-{{ $business }}
+If you didn't create an account, you can ignore this email.
 </x-mail::message>
