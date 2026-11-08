@@ -26,6 +26,19 @@ enum ApplicationStatus: string
     }
 
     /**
+     * The wording the applicant sees in their account.
+     */
+    public function applicantLabel(): string
+    {
+        return match ($this) {
+            self::AwaitingPayment => 'Fee not paid yet',
+            self::New => 'Waiting for review',
+            self::Approved => 'Approved',
+            self::Declined => 'Not approved',
+        };
+    }
+
+    /**
      * Get the Flux badge colour.
      */
     public function color(): string

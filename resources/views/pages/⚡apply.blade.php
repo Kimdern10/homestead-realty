@@ -172,6 +172,10 @@ new class extends Component {
                     <span class="sent__icon"><x-icon name="check" /></span>
                     <strong>Application sent</strong>
                     <span>{{ Str::before($listing->agent->name, ' ') }} will review it and contact you at {{ $email }}.</span>
+                    <span>We'll email you when it's approved{{ app(\App\Services\Payments\PaymentManager::class)->offers(\App\Enums\PaymentPurpose::HoldingDeposit) ? ', with a link to pay the holding deposit' : '' }}.</span>
+                    @auth
+                        <a class="btn btn--primary btn--sm" href="{{ route('my-applications') }}">Track it in My applications</a>
+                    @endauth
                     <a class="btn btn--outline btn--sm" href="{{ route('listings.show', $listing) }}">Back to the home</a>
                 </div>
             @else

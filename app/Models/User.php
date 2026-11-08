@@ -88,6 +88,16 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Rental applications the visitor sent while signed in.
+     *
+     * @return HasMany<RentalApplication, $this>
+     */
+    public function rentalApplications(): HasMany
+    {
+        return $this->hasMany(RentalApplication::class);
+    }
+
+    /**
      * Homes the visitor has saved.
      *
      * @return BelongsToMany<Listing, $this>

@@ -3,6 +3,10 @@
 namespace App\Models;
 
 use App\Enums\ApplicationStatus;
+use App\Enums\ListingStatus;
+use App\Enums\PaymentPurpose;
+use App\Enums\PaymentStatus;
+use App\Services\Payments\PaymentManager;
 use Database\Factories\RentalApplicationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -36,6 +40,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read Listing $listing
  * @property-read Payment|null $payment
+ * @property-read Payment|null $depositPayment
  */
 #[Fillable([
     'listing_id', 'user_id', 'status', 'name', 'email', 'phone', 'move_in_date', 'occupants', 'has_pets',
@@ -75,7 +80,29 @@ class RentalApplication extends Model
      */
     public function payment(): MorphOne
     {
-        return $this->morphOne(Payment::class, 'payable');
+        return $this->morphOne(Payment::class, 'payable')->where('purpose', PaymentPurpose::ApplicationFee);
+    }
+
+    /**
+     * The holding deposit paid after the application was approved.
+     *
+     * @return MorphOne<Payment, $this>
+     */
+    public function depositPayment(): MorphOne
+    {
+        return $this->morphOne(Payment::class, 'payable')->where('purpose', PaymentPurpose::HoldingDeposit)->where('status', PaymentStatus::Paid);
+    }
+
+    /**
+     * Whether the applicant can pay the holding deposit now: approved, the home is still for rent,
+     * deposits are switched on and it has not been paid yet.
+     */
+    public function canPayDeposit(): bool
+    {
+        return $this->status === ApplicationStatus::Approved
+            && $this->listing->status === ListingStatus::ForRent
+            && app(PaymentManager::class)->offers(PaymentPurpose::HoldingDeposit)
+            && ! $this->depositPayment()->exists();
     }
 
     /**

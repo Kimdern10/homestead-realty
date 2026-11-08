@@ -2,7 +2,9 @@
 
 use App\Enums\ListingStatus;
 use App\Enums\PaymentPurpose;
+use App\Enums\ApplicationStatus;
 use App\Models\Listing;
+use App\Models\RentalApplication;
 use App\Services\Payments\PaymentManager;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Locked;
@@ -11,6 +13,9 @@ use Livewire\Component;
 new class extends Component {
     #[Locked]
     public Listing $listing;
+
+    #[Locked]
+    public RentalApplication $application;
 
     public string $name = '';
 
@@ -21,7 +26,8 @@ new class extends Component {
     public bool $agree = false;
 
     /**
-     * A holding deposit is only for an available rental, and only when payments are on.
+     * The deposit is paid after the application is approved: from the link in the approval email,
+     * or from "My applications" when signed in.
      */
     public function mount(Listing $listing, PaymentManager $payments): void
     {
@@ -30,10 +36,32 @@ new class extends Component {
             404,
         );
 
-        if ($user = auth()->user()) {
-            $this->name = $user->name;
-            $this->email = $user->email;
+        $application = $this->approvedApplication($listing);
+
+        abort_if($application === null, 404);
+
+        $this->application = $application;
+        $this->name = $application->name;
+        $this->email = $application->email;
+        $this->phone = $application->phone;
+    }
+
+    /**
+     * The approved application this visitor may pay the deposit for, if any.
+     */
+    private function approvedApplication(Listing $listing): ?RentalApplication
+    {
+        $query = RentalApplication::query()->where('listing_id', $listing->id)->where('status', ApplicationStatus::Approved);
+
+        if (request()->filled('application') && request()->hasValidSignature()) {
+            $application = (clone $query)->whereKey((int) request()->query('application'))->first();
+        } elseif ($user = auth()->user()) {
+            $application = (clone $query)->where('user_id', $user->id)->latest()->first();
+        } else {
+            $application = null;
         }
+
+        return $application?->canPayDeposit() ? $application : null;
     }
 
     /**
@@ -68,6 +96,7 @@ new class extends Component {
                 'Holding deposit for '.$this->listing->address,
                 ['name' => $validated['name'], 'email' => $validated['email'], 'phone' => $validated['phone'], 'user_id' => auth()->id()],
                 $this->listing,
+                $this->application,
             );
         } catch (RuntimeException $exception) {
             report($exception);
@@ -83,7 +112,7 @@ new class extends Component {
     {
         return $this->view()
             ->layout('layouts::site', ['noindex' => true, 'current' => 'rent'])
-            ->title('Hold '.$this->listing->address);
+            ->title('Pay the holding deposit');
     }
 }; ?>
 
@@ -91,7 +120,7 @@ new class extends Component {
     <div class="page-head">
         <div class="container">
             <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ route('listings.show', $listing) }}">← Back to the home</a></nav>
-            <h1>Hold this home</h1>
+            <h1>Pay the holding deposit</h1>
             <p>{{ $listing->fullAddress() }} · {{ $listing->priceLabel() }}</p>
         </div>
     </div>
@@ -105,7 +134,7 @@ new class extends Component {
                     <b>{{ $payments->money($payments->price(\App\Enums\PaymentPurpose::HoldingDeposit)) }}</b>
                 </div>
                 <ul class="hold-points">
-                    <li><x-icon name="check" /> The home is marked <b>pending</b> and taken off the market while your application is checked.</li>
+                    <li><x-icon name="check" /> Your application is <b>approved</b>. Paying now takes the home off the market for you.</li>
                     <li><x-icon name="check" /> {{ Str::before($listing->agent->name, ' ') }} will contact you about the lease and next steps.</li>
                     <li><x-icon name="check" /> The deposit usually goes towards your first month's rent or security deposit. Confirm the terms with the agent.</li>
                 </ul>

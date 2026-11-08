@@ -119,18 +119,21 @@ test('a repeated webhook is applied once and a wrong amount is refused', functio
     Mail::assertSent(PaymentReceipt::class, 1);
 });
 
-test('a paid holding deposit through Paystack marks the rental pending', function () {
+test('an approved applicant pays the holding deposit through Paystack and the rental goes pending', function () {
     Setting::put(['payment_gateway' => 'paystack']);
     Http::fake(['api.paystack.co/transaction/initialize' => Http::response(['status' => true, 'data' => ['authorization_url' => 'https://checkout.paystack.com/abc', 'access_code' => 'abc']])]);
     $listing = Listing::factory()->forRent()->create();
+    $renter = User::factory()->create();
+    $application = RentalApplication::factory()->for($listing)->create(['user_id' => $renter->id, 'status' => ApplicationStatus::Approved, 'phone' => '(305) 555-0131']);
 
-    Livewire::test('pages::hold', ['listing' => $listing])
-        ->set('name', 'Brian Walker')->set('email', 'brian@example.com')->set('phone', '(305) 555-0131')->set('agree', true)
+    Livewire::actingAs($renter)->test('pages::hold', ['listing' => $listing])
+        ->assertSet('email', $application->email)
+        ->set('agree', true)
         ->call('pay')
         ->assertRedirect('https://checkout.paystack.com/abc');
 
     $payment = Payment::query()->sole();
-    expect($payment->gateway)->toBe('paystack')->and($payment->amount)->toBe(50000);
+    expect($payment->gateway)->toBe('paystack')->and($payment->amount)->toBe(50000)->and($payment->payable->is($application))->toBeTrue();
 
     $payload = json_encode(['event' => 'charge.success', 'data' => ['reference' => $payment->reference, 'status' => 'success', 'amount' => 50000, 'currency' => 'USD', 'id' => 99]]);
     $this->call('POST', route('payments.webhook', 'paystack'), [], [], [], [

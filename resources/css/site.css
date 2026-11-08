@@ -903,3 +903,13 @@ body { font-size: 16px; line-height: 1.65; text-rendering: optimizeLegibility; }
 .map.is-drawing, .map.is-drawing .leaflet-interactive { cursor: crosshair; }
 button.link { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; font-weight: 700; color: var(--brand); }
 .badge--rented::before { background: #6b7fa8; }
+.my-app { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.my-app + .my-app { margin-top: 14px; }
+@media (min-width: 640px) { .my-app { grid-template-columns: 200px minmax(0, 1fr); } }
+.my-app__photo img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: var(--radius-sm); }
+.my-app__body { display: grid; gap: 8px; align-content: start; justify-items: start; min-width: 0; }
+.my-app__body h2 { font-size: 19px; }
+.my-app__body h2 a { text-decoration: none; }
+.my-app__status { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; background: var(--surface-2); color: var(--ink); }
+.my-app__status.is-approved { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+.my-app__status.is-declined { color: var(--muted); }

@@ -16,6 +16,7 @@
                     {{-- Visitors only see this layout on their account settings. --}}
                     <flux:sidebar.group :heading="__('My account')" class="grid">
                         <flux:sidebar.item icon="heart" :href="route('saved')">{{ __('Saved homes & searches') }}</flux:sidebar.item>
+                        <flux:sidebar.item icon="key" :href="route('my-applications')">{{ __('My rental applications') }}</flux:sidebar.item>
                         <flux:sidebar.item icon="magnifying-glass" :href="route('search')">{{ __('Search homes') }}</flux:sidebar.item>
                         <flux:sidebar.item icon="user" :href="route('profile.edit')" :current="request()->routeIs('profile.edit', 'security.edit', 'appearance.edit')" wire:navigate>{{ __('Account settings') }}</flux:sidebar.item>
                     </flux:sidebar.group>

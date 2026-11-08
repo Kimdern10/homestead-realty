@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\ApplicationStatus;
+use App\Mail\ApplicationDecided;
 use App\Models\RentalApplication;
 use Flux\Flux;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -30,8 +32,21 @@ new #[Title('Rental application')] class extends Component {
 
         abort_unless(in_array($decision, [ApplicationStatus::Approved, ApplicationStatus::Declined, ApplicationStatus::New], true), 422);
 
+        $changed = $this->application->status !== $decision;
         $this->application->update(['status' => $decision]);
-        Flux::toast(__('Marked as :status.', ['status' => strtolower($decision->label())]), variant: 'success');
+
+        // Tell the applicant, so they know to pay the deposit (or to keep looking).
+        if ($changed && in_array($decision, [ApplicationStatus::Approved, ApplicationStatus::Declined], true)) {
+            try {
+                Mail::to($this->application->email)->send(new ApplicationDecided($this->application));
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
+
+        Flux::toast(in_array($decision, [ApplicationStatus::Approved, ApplicationStatus::Declined], true) && $changed
+            ? __('Marked as :status. The applicant has been emailed.', ['status' => strtolower($decision->label())])
+            : __('Marked as :status.', ['status' => strtolower($decision->label())]), variant: 'success');
     }
 }; ?>
 

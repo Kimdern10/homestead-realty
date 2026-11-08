@@ -323,15 +323,23 @@
                     </div>
                     @if ($listing->status === ListingStatus::ForRent)
                         @php($payments = app(\App\Services\Payments\PaymentManager::class))
+                        @php($myApplication = auth()->user()?->rentalApplications()->where('listing_id', $listing->id)->latest()->first())
                         <div class="rent-actions">
-                            <a class="btn btn--primary btn--block" href="{{ route('listings.apply', $listing) }}" data-test="apply-button">
-                                <x-icon name="key" /> Apply to rent
-                                @if ($payments->offers(\App\Enums\PaymentPurpose::ApplicationFee))<span class="rent-actions__fee">{{ $payments->money($payments->price(\App\Enums\PaymentPurpose::ApplicationFee)) }} fee</span>@endif
-                            </a>
-                            @if ($payments->offers(\App\Enums\PaymentPurpose::HoldingDeposit))
-                                <a class="btn btn--outline btn--block" href="{{ route('listings.hold', $listing) }}" data-test="hold-button">
-                                    <x-icon name="shield" /> Hold it · {{ $payments->money($payments->price(\App\Enums\PaymentPurpose::HoldingDeposit)) }} deposit
+                            @if ($myApplication?->canPayDeposit())
+                                <p class="pay-note"><x-icon name="check" /> Your application is approved. Pay the holding deposit to secure the home.</p>
+                                <a class="btn btn--primary btn--block" href="{{ route('listings.hold', $listing) }}" data-test="hold-button">
+                                    <x-icon name="shield" /> Pay holding deposit · {{ $payments->money($payments->price(\App\Enums\PaymentPurpose::HoldingDeposit)) }}
                                 </a>
+                            @elseif ($myApplication && in_array($myApplication->status, [\App\Enums\ApplicationStatus::New, \App\Enums\ApplicationStatus::Approved], true))
+                                <p class="pay-note"><x-icon name="clock" /> You applied {{ $myApplication->created_at->diffForHumans() }}. Status: <b>{{ $myApplication->status->applicantLabel() }}</b>. <a href="{{ route('my-applications') }}">See my applications</a></p>
+                            @else
+                                <a class="btn btn--primary btn--block" href="{{ route('listings.apply', $listing) }}" data-test="apply-button">
+                                    <x-icon name="key" /> Apply to rent
+                                    @if ($payments->offers(\App\Enums\PaymentPurpose::ApplicationFee))<span class="rent-actions__fee">{{ $payments->money($payments->price(\App\Enums\PaymentPurpose::ApplicationFee)) }} fee</span>@endif
+                                </a>
+                                @if ($payments->offers(\App\Enums\PaymentPurpose::HoldingDeposit))
+                                    <p class="form-note" style="text-align: center">Once approved, you can pay a {{ $payments->money($payments->price(\App\Enums\PaymentPurpose::HoldingDeposit)) }} holding deposit online.</p>
+                                @endif
                             @endif
                         </div>
                     @endif

@@ -105,6 +105,7 @@
             @if ($user?->isStaff())
                 <a class="btn btn--dark" href="{{ route('dashboard') }}">Go to your dashboard</a>
             @elseif ($user)
+                <a href="{{ route('my-applications') }}">My rental applications</a>
                 <a class="btn btn--outline" href="{{ route('profile.edit') }}">Account settings</a>
             @else
                 <a class="btn btn--primary" href="{{ route('register') }}">Create a free account</a>

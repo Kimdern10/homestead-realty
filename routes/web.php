@@ -43,6 +43,7 @@ Route::post('favorites/{listing}', [FavoriteController::class, 'toggle'])
     ->name('favorites.toggle');
 
 Route::livewire('saved', 'pages::saved')->middleware(['auth', 'verified'])->name('saved');
+Route::livewire('my-applications', 'pages::my-applications')->middleware(['auth', 'verified'])->name('my-applications');
 
 require __DIR__.'/dashboard.php';
 require __DIR__.'/settings.php';
