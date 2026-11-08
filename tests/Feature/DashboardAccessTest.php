@@ -62,11 +62,11 @@ test('the admin sees every listing', function () {
 });
 
 test('the admin can open every new dashboard page', function (string $route) {
-    $this->actingAs(App\Models\User::factory()->admin()->create())->get(route($route))->assertOk();
+    $this->actingAs(User::factory()->admin()->create())->get(route($route))->assertOk();
 })->with(['dashboard.open-houses', 'dashboard.reviews', 'dashboard.reports', 'dashboard.submissions', 'dashboard.guides.index', 'dashboard.guides.create']);
 
 test('agents can plan open houses but not open office pages', function () {
-    $agent = App\Models\Agent::factory()->create();
+    $agent = Agent::factory()->create();
 
     $this->actingAs($agent->user)->get(route('dashboard.open-houses'))->assertOk();
     $this->actingAs($agent->user)->get(route('dashboard.submissions'))->assertForbidden();
