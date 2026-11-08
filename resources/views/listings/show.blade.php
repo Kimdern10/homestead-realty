@@ -160,7 +160,7 @@
                         <div class="listing-actions">
                             <x-favorite-button :listing="$listing" :large="true" />
                             <button type="button" class="fav-btn fav-btn--lg" data-share><x-icon name="share" /><span>Share</span></button>
-                            <button type="button" class="fav-btn fav-btn--lg" data-compare="{{ $listing->id }}" aria-pressed="false"><x-icon name="compare" /><span>Compare</span></button>
+                            <button type="button" class="fav-btn fav-btn--lg" data-compare="{{ $listing->id }}" aria-pressed="false" title="Compare this home with others"><x-icon name="compare" /><span data-compare-text>Compare</span></button>
                             <a class="fav-btn fav-btn--lg" href="{{ route('listings.flyer', $listing) }}" target="_blank" rel="noopener" data-no-navigate><x-icon name="print" /><span>Flyer</span></a>
                         </div>
                     </div>

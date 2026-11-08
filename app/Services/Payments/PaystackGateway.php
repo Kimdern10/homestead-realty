@@ -86,7 +86,7 @@ class PaystackGateway implements PaymentGateway
     private function send(callable $call): array
     {
         if (! $this->isConfigured()) {
-            throw new RuntimeException('Add your Paystack secret key (PAYSTACK_SECRET) to the .env file.');
+            throw new RuntimeException('Add your Paystack secret key (PAYSTACK_SECRET_KEY) to the .env file.');
         }
 
         try {

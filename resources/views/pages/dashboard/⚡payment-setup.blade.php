@@ -67,7 +67,7 @@ new #[Title('Payments setup')] class extends Component {
             <flux:radio.group wire:model.live="payment_gateway" variant="cards" class="grid gap-3 sm:grid-cols-3">
                 <flux:radio value="none" :label="__('Off')" :description="__('No online payments. Applications are free.')" />
                 <flux:radio value="stripe" label="Stripe" :description="$stripe->isConfigured() ? __('Key added ✓') : __('Needs STRIPE_SECRET')" />
-                <flux:radio value="paystack" label="Paystack" :description="$paystack->isConfigured() ? __('Key added ✓') : __('Needs PAYSTACK_SECRET')" />
+                <flux:radio value="paystack" label="Paystack" :description="$paystack->isConfigured() ? __('Key added ✓') : __('Needs PAYSTACK_SECRET_KEY')" />
             </flux:radio.group>
 
             @if ($payment_gateway !== 'none')
@@ -82,7 +82,7 @@ new #[Title('Payments setup')] class extends Component {
                                     <code class="mt-2 block rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">STRIPE_SECRET=sk_test_…<br>STRIPE_WEBHOOK_SECRET=whsec_…</code>
                                 @else
                                     {{ __('In Paystack: Settings › API Keys & Webhooks, copy the secret key. Use the test key (sk_test_…) until you’re ready.') }}
-                                    <code class="mt-2 block rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">PAYSTACK_SECRET=sk_test_…</code>
+                                    <code class="mt-2 block rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">PAYSTACK_SECRET_KEY=sk_test_…</code>
                                 @endif
                                 {{ __('Until then, visitors can’t pay and payment buttons stay hidden.') }}
                             </flux:callout.text>

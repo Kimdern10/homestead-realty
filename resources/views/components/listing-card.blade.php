@@ -22,7 +22,7 @@
         @if ($openHouse)
             <span class="card__open" data-test="open-house-badge"><x-icon name="door" /> {{ $openHouse->shortLabel() }}</span>
         @endif
-        <button type="button" class="card__compare" data-compare="{{ $listing->id }}" aria-pressed="false" aria-label="Add to compare" title="Compare"><x-icon name="compare" /></button>
+        <button type="button" class="card__compare" data-compare="{{ $listing->id }}" aria-pressed="false" title="Compare this home with others"><x-icon name="compare" /><span data-compare-text>Compare</span></button>
     </div>
     <div class="card__fav"><x-favorite-button :listing="$listing" /></div>
     <div class="card__body">

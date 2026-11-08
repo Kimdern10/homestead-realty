@@ -833,7 +833,7 @@ function syncCompare() {
     document.querySelectorAll('[data-compare]').forEach((button) => {
         const on = list.includes(Number(button.dataset.compare));
         button.setAttribute('aria-pressed', String(on));
-        button.setAttribute('aria-label', on ? 'Remove from compare' : 'Add to compare');
+        button.querySelector('[data-compare-text]')?.replaceChildren(on ? 'Added to compare' : 'Compare');
     });
 
     // The plain /compare link (footer, home page) shows the homes picked in this browser.

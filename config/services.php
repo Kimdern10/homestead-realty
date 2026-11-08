@@ -53,7 +53,8 @@ return [
     ],
 
     'paystack' => [
-        'secret' => env('PAYSTACK_SECRET'),
+        // Paystack's dashboard calls it the "Secret Key", so PAYSTACK_SECRET_KEY works too.
+        'secret' => env('PAYSTACK_SECRET') ?: env('PAYSTACK_SECRET_KEY'),
     ],
 
 ];
