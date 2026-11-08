@@ -141,6 +141,7 @@
                             <li><a href="{{ route('search', ['status' => 'for_sale']) }}">Homes for sale</a></li>
                             <li><a href="{{ route('search', ['status' => 'for_rent']) }}">Homes for rent</a></li>
                             <li><a href="{{ route('search', ['status' => 'sold']) }}">Recently sold</a></li>
+                            <li><a href="{{ route('search', ['status' => 'rented']) }}">Recently rented</a></li>
                             <li><a href="{{ route('search', ['view' => 'map']) }}">Search on a map</a></li>
                             <li><a href="{{ route('open-houses') }}">Open houses</a></li>
                             <li><a href="{{ route('agents.index') }}">Find an agent</a></li>

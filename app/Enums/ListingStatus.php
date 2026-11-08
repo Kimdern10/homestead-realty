@@ -8,6 +8,7 @@ enum ListingStatus: string
     case Pending = 'pending';
     case ForRent = 'for_rent';
     case Sold = 'sold';
+    case Rented = 'rented';
 
     /**
      * Get the name shown to people.
@@ -19,6 +20,7 @@ enum ListingStatus: string
             self::Pending => 'Pending',
             self::ForRent => 'For rent',
             self::Sold => 'Sold',
+            self::Rented => 'Rented',
         };
     }
 
@@ -27,7 +29,7 @@ enum ListingStatus: string
      */
     public function isRental(): bool
     {
-        return $this === self::ForRent;
+        return in_array($this, [self::ForRent, self::Rented], true);
     }
 
     /**
@@ -36,6 +38,14 @@ enum ListingStatus: string
     public function isAvailable(): bool
     {
         return in_array($this, [self::ForSale, self::ForRent], true);
+    }
+
+    /**
+     * Whether the home is off the market for good: sold or rented out.
+     */
+    public function isClosed(): bool
+    {
+        return in_array($this, [self::Sold, self::Rented], true);
     }
 
     /**
@@ -48,6 +58,7 @@ enum ListingStatus: string
             self::Pending => 'pending',
             self::ForRent => 'rent',
             self::Sold => 'sold',
+            self::Rented => 'rented',
         };
     }
 

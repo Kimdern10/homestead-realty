@@ -77,6 +77,17 @@ class ListingFactory extends Factory
     }
 
     /**
+     * A rental that has been taken.
+     */
+    public function rented(): static
+    {
+        return $this->forRent()->state(fn (array $attributes) => [
+            'status' => ListingStatus::Rented,
+            'sold_at' => now()->subDays(fake()->numberBetween(5, 90)),
+        ]);
+    }
+
+    /**
      * A listing hidden from the website.
      */
     public function draft(): static

@@ -377,7 +377,7 @@ new #[Title('Listing')] class extends Component {
             'is_published' => $validated['is_published'],
             'is_featured' => $user->isAdmin() ? $validated['is_featured'] : ($listing->is_featured ?? false),
             'listed_at' => $validated['listed_at'],
-            'sold_at' => $status === ListingStatus::Sold ? ($nullable('sold_at') ?? today()->toDateString()) : null,
+            'sold_at' => $status->isClosed() ? ($nullable('sold_at') ?? today()->toDateString()) : null,
         ]);
 
         // The admin featuring a home is permanent; un-featuring also ends any paid feature.
@@ -590,8 +590,8 @@ new #[Title('Listing')] class extends Component {
             <div class="grid gap-5">
                 <div class="grid gap-5 sm:grid-cols-2">
                     <flux:input wire:model="listed_at" type="date" :label="__('Listed on *')" />
-                    @if ($status === 'sold')
-                        <flux:input wire:model="sold_at" type="date" :label="__('Sold on')" :description="__('Leave empty for today.')" />
+                    @if (in_array($status, ['sold', 'rented'], true))
+                        <flux:input wire:model="sold_at" type="date" :label="$status === 'rented' ? __('Rented on') : __('Sold on')" :description="__('Leave empty for today.')" />
                     @endif
                 </div>
                 <flux:switch wire:model="is_published" :label="__('Published')" :description="__('Turn off to keep it as a draft that visitors cannot see.')" />

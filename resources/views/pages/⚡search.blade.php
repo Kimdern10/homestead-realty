@@ -251,7 +251,7 @@ new class extends Component {
     #[Computed]
     public function priceOptions(): array
     {
-        return $this->status === ListingStatus::ForRent->value ? self::RENT_PRICES : self::SALE_PRICES;
+        return in_array($this->status, [ListingStatus::ForRent->value, ListingStatus::Rented->value], true) ? self::RENT_PRICES : self::SALE_PRICES;
     }
 
     /**
@@ -275,6 +275,7 @@ new class extends Component {
             'for_sale' => 'Homes for sale',
             'for_rent' => 'Homes for rent',
             'sold' => 'Recently sold homes',
+            'rented' => 'Recently rented homes',
             'pending' => 'Pending homes',
             default => 'Homes',
         };

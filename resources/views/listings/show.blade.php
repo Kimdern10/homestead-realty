@@ -67,7 +67,7 @@
         'Property tax' => $listing->property_tax ? '$'.number_format($listing->property_tax).'/yr' : null,
         'Neighborhood' => $listing->neighborhood,
         'Listed' => $listing->listed_at->format('M j, Y'),
-        'Sold' => $listing->sold_at?->format('M j, Y'),
+        $listing->status === ListingStatus::Rented ? 'Rented' : 'Sold' => $listing->sold_at?->format('M j, Y'),
     ]);
 
     $galleryClass = match (true) {
@@ -338,7 +338,7 @@
                     @if ($listing->status->isAvailable() || $listing->status === ListingStatus::Pending)
                         <livewire:contact-agent :agent="$listing->agent" :listing="$listing" />
                     @else
-                        <p class="muted" style="margin-bottom: 12px">This home has sold. Ask {{ Str::before($listing->agent->name, ' ') }} about similar homes nearby.</p>
+                        <p class="muted" style="margin-bottom: 12px">{{ $listing->status === ListingStatus::Rented ? 'This home has been rented.' : 'This home has sold.' }} Ask {{ Str::before($listing->agent->name, ' ') }} about similar homes nearby.</p>
                         <livewire:contact-agent :agent="$listing->agent" :listing="$listing" :allow-tours="false" />
                     @endif
                     @php($whatsapp = $listing->agent->whatsappLink('Hi '.Str::before($listing->agent->name, ' ').", I'm interested in ".$listing->address.': '.route('listings.show', $listing)))

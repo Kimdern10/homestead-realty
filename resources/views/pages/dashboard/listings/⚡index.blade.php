@@ -95,7 +95,7 @@ new #[Title('Listings')] class extends Component {
 
         $listing->forceFill([
             'status' => $newStatus,
-            'sold_at' => $newStatus === ListingStatus::Sold ? ($listing->sold_at ?? today()) : null,
+            'sold_at' => $newStatus->isClosed() ? ($listing->sold_at ?? today()) : null,
             'edited_by_admin' => $listing->edited_by_admin || $listing->isFromApi(),
         ])->save();
 
@@ -191,7 +191,7 @@ new #[Title('Listings')] class extends Component {
                     <div class="min-w-0 flex-1">
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="font-semibold">{{ $listing->priceLabel() }}</span>
-                            <flux:badge size="sm" :color="match ($listing->status) { \App\Enums\ListingStatus::ForSale => 'red', \App\Enums\ListingStatus::ForRent => 'blue', \App\Enums\ListingStatus::Pending => 'amber', default => 'zinc' }">{{ $listing->status->label() }}</flux:badge>
+                            <flux:badge size="sm" :color="match ($listing->status) { \App\Enums\ListingStatus::ForSale => 'red', \App\Enums\ListingStatus::ForRent => 'blue', \App\Enums\ListingStatus::Pending => 'amber', \App\Enums\ListingStatus::Rented => 'sky', default => 'zinc' }">{{ $listing->status->label() }}</flux:badge>
                             @unless ($listing->is_published)<flux:badge size="sm" color="zinc" icon="eye-slash">{{ __('Draft') }}</flux:badge>@endunless
                             @if ($listing->isFromApi())<flux:badge size="sm" color="sky" icon="cloud-arrow-down">{{ __('Live feed') }}</flux:badge>@endif
                             @if ($listing->isFeaturedNow())<flux:badge size="sm" color="amber" icon="star">{{ $listing->featured_until ? __('Featured until :date', ['date' => $listing->featured_until->format('M j')]) : __('Featured') }}</flux:badge>@endif

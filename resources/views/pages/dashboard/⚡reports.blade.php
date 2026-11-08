@@ -47,6 +47,7 @@ new #[Title('Reports')] class extends Component {
             'won' => Enquiry::query()->where('status', EnquiryStatus::Closed)->where('updated_at', '>=', $since)->count(),
             'listed' => Listing::query()->where('created_at', '>=', $since)->count(),
             'sold' => Listing::query()->where('status', ListingStatus::Sold)->where('sold_at', '>=', $since)->count(),
+            'rented' => Listing::query()->where('status', ListingStatus::Rented)->where('sold_at', '>=', $since)->count(),
             'revenue' => '$'.number_format($revenue / 100),
         ];
     }
@@ -145,13 +146,14 @@ new #[Title('Reports')] class extends Component {
         </flux:radio.group>
     </div>
 
-    <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+    <div class="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
         @foreach ([
             'visits' => __('Website visits'),
             'leads' => __('New leads'),
             'won' => __('Leads won'),
             'listed' => __('Homes added'),
             'sold' => __('Homes sold'),
+            'rented' => __('Homes rented'),
             'revenue' => __('Online payments'),
         ] as $key => $label)
             <div class="rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">

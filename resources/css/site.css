@@ -903,3 +903,4 @@ body { font-size: 16px; line-height: 1.65; text-rendering: optimizeLegibility; }
 .draw-tools__hint { padding: 6px 12px; border-radius: 999px; background: rgba(28, 31, 35, .86); color: #fff; font-size: 13px; font-weight: 700; }
 .map.is-drawing, .map.is-drawing .leaflet-interactive { cursor: crosshair; }
 button.link { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; font-weight: 700; color: var(--brand); }
+.badge--rented::before { background: #6b7fa8; }
