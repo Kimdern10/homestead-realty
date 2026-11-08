@@ -9,17 +9,18 @@ use App\Models\Visit;
 use Livewire\Livewire;
 
 test('a first visit is counted once with where it came from', function () {
-    $this->withHeader('Referer', 'https://www.google.com/search?q=homes')->get(route('home'))->assertOk();
-    $this->get(route('cities.index'))->assertOk();
+    $this->withHeaders(['Referer' => 'https://www.google.com/search?q=homes', 'Accept-Language' => 'en-US'])->get(route('home'))->assertOk();
+    $this->withHeader('Accept-Language', 'en-US')->get(route('cities.index'))->assertOk();
 
     $visit = Visit::query()->sole();
 
     expect($visit->source)->toBe('Google')->and($visit->views)->toBe(1);
 });
 
-test('staff and bots are not counted', function () {
-    $this->withHeader('User-Agent', 'Googlebot/2.1')->get(route('home'));
-    $this->actingAs(User::factory()->admin()->create())->get(route('home'));
+test('staff, bots and scripts are not counted', function () {
+    $this->withHeaders(['User-Agent' => 'Googlebot/2.1', 'Accept-Language' => 'en-US'])->get(route('home'));
+    $this->flushHeaders()->withHeaders(['User-Agent' => 'curl/8.0', 'Accept-Language' => ''])->get(route('home'));
+    $this->flushHeaders()->actingAs(User::factory()->admin()->create())->withHeader('Accept-Language', 'en-US')->get(route('home'));
 
     expect(Visit::query()->count())->toBe(0);
 });

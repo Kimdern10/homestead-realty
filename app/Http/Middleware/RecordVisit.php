@@ -50,6 +50,8 @@ class RecordVisit
             && ! $request->ajax()
             && ! $request->is(...self::SKIP)
             && ! $request->user()?->isStaff()
+            // Real browsers always send their language; scripts and most crawlers don't.
+            && filled($request->header('Accept-Language'))
             && ! preg_match('/bot|crawl|spider|slurp|preview|monitor|headless|lighthouse/i', (string) $request->userAgent());
     }
 }
