@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Once;
 
 /**
  * Key/value store for the business details the owner can edit in the dashboard.
@@ -65,10 +66,11 @@ class Setting extends Model
     {
         // Only the saved values are cached; defaults are added on every read so
         // settings introduced by a later update are never missing from an old cache.
-        return array_merge(self::DEFAULTS, Cache::rememberForever(
+        // once() keeps them in memory for the rest of the page, so the cache is read a single time.
+        return once(fn (): array => array_merge(self::DEFAULTS, Cache::rememberForever(
             self::CACHE_KEY,
             fn (): array => static::query()->pluck('value', 'key')->map(fn (?string $value): string => (string) $value)->all(),
-        ));
+        )));
     }
 
     /**
@@ -91,6 +93,7 @@ class Setting extends Model
         }
 
         Cache::forget(self::CACHE_KEY);
+        Once::flush();
     }
 
     /**

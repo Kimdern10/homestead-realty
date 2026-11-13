@@ -43,6 +43,31 @@ document.addEventListener('click', (event) => {
     window.Livewire.navigate(url.href);
 });
 
+// Search boxes that are plain GET forms (home page hero, 404 page) also switch pages without a reload.
+document.addEventListener('submit', (event) => {
+    const form = event.target;
+
+    if (event.defaultPrevented || ! (form instanceof HTMLFormElement) || (form.method || 'get').toLowerCase() !== 'get' || form.hasAttribute('data-no-navigate') || ! window.Livewire?.navigate) {
+        return;
+    }
+
+    // Livewire forms (wire:submit) handle themselves.
+    if ([...form.attributes].some((attribute) => attribute.name.startsWith('wire:'))) {
+        return;
+    }
+
+    const url = new URL(form.getAttribute('action') || window.location.href, window.location.href);
+
+    if (url.origin !== window.location.origin || fullReloadPaths.test(url.pathname)) {
+        return;
+    }
+
+    // Leave out empty boxes so the address stays tidy (e.g. /search?status=for_sale).
+    url.search = new URLSearchParams([...new FormData(form, event.submitter)].filter(([, value]) => String(value).trim() !== '')).toString();
+    event.preventDefault();
+    window.Livewire.navigate(url.href);
+});
+
 // Light / dark switch, remembered on this device.
 // Light is the default; dark only when the visitor picked it. Page changes swap the <html> tag,
 // so the choice is put back after every change (and just before the new page shows, to avoid a flash).
